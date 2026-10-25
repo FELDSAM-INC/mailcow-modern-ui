@@ -1,0 +1,25 @@
+# Optional root-URL mode. No upstream location or PHP handler is replaced.
+# @ROOT_ROUTES@ is rendered from the installed UI's validated deployment manifest.
+location = /ng/app-config.js {
+    default_type application/javascript;
+    add_header Cache-Control "no-store" always;
+    add_header X-Content-Type-Options nosniff always;
+    return 200 "window.__MAILCOW_UI_BASE_PATH__ = '/';\n";
+}
+
+location = / {
+    # Classic OAuth/SSO, mobileconfig and other query-driven flows keep index.php.
+    if ($args != "") { return 418; }
+    include /etc/nginx/conf.d/modern-ui-root-proxy.custom;
+}
+
+# An explicit UI namespace list leaves APIs, PHP, SOGo, DAV, ActiveSync, autodiscovery,
+# ACME, Rspamd, language files, downloads and unknown/operator paths with mailcow.
+location ~* ^/(?:@ROOT_ROUTES@)(?:/|$) {
+    include /etc/nginx/conf.d/modern-ui-root-proxy.custom;
+}
+
+location @modern_ui_classic {
+    # A named error-page handoff preserves the method, body and query string.
+    try_files $uri $uri/ @strip-ext;
+}

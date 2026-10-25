@@ -26,6 +26,10 @@ jobs:
           .venv/bin/python -m pip install 'ansible-core==2.19.3'
       - name: Validate playbook and inventory
         run: .venv/bin/ansible-playbook -i ansible/inventory.example.yml ansible/install.yml --syntax-check
+      - name: Verify Ansible inventory settings and repeat runs in temporary fixtures
+        run: sudo -n .venv/bin/python scripts/test-ansible.py
+      - name: Verify mailcow routes and internal listeners with nginx
+        run: .venv/bin/python scripts/test-nginx.py
       - name: Check the offline showcase is current
         run: |
           python3 scripts/package-showcase.py

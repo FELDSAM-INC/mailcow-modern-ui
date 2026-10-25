@@ -6,11 +6,15 @@
   serial: 1
   vars:
     modern_ui_source: "{{ playbook_dir }}/.."
-    modern_ui_tools_dir: /opt/mailcow-modern-ui
-    modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2:latest
-    modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng:latest
-    modern_ui_pull: true
   tasks:
+    - name: Apply defaults without overriding inventory settings
+      ansible.builtin.set_fact:
+        modern_ui_tools_dir: "{{ modern_ui_tools_dir | default('/opt/mailcow-modern-ui') }}"
+        modern_ui_api_image: "{{ modern_ui_api_image | default('ghcr.io/feldsam-inc/mailcow-rest-v2:latest') }}"
+        modern_ui_web_image: "{{ modern_ui_web_image | default('ghcr.io/feldsam-inc/mailcowui-ng:latest') }}"
+        modern_ui_pull: "{{ modern_ui_pull | default(true) }}"
+        modern_ui_path: "{{ modern_ui_path | default('/ng/') }}"
+
     - name: Check required settings
       ansible.builtin.assert:
         that:
@@ -19,6 +23,7 @@
           - mailcow_dir is match('^/')
           - mailcow_url is defined
           - mailcow_url is match('^https://[^/]+$')
+          - modern_ui_path in ['/ng/', '/']
         fail_msg: >-
           Set mailcow_dir and mailcow_url in your inventory. This playbook applies
           changes; use --syntax-check for syntax validation, not --check.
@@ -45,6 +50,8 @@
         - scripts/manage.py
         - deploy/compose.yml
         - deploy/nginx/site.restv2.custom
+        - deploy/nginx/site.modern-ui-root.custom
+        - deploy/nginx/modern-ui-root-proxy.custom
         - deploy/sources.json
 
     - name: Configure the addon and preserve its existing application key
@@ -94,6 +101,8 @@
           - activate
           - --mailcow-dir
           - "{{ mailcow_dir }}"
+          - --ui-path
+          - "{{ modern_ui_path }}"
       register: modern_ui_routes
       changed_when: modern_ui_routes.rc == 0 and (modern_ui_routes.stdout | from_json).changed
 
@@ -116,11 +125,11 @@
 
     - name: Verify the UI over HTTPS
       ansible.builtin.uri:
-        url: "{{ mailcow_url }}/ng/"
+        url: "{{ mailcow_url }}{{ modern_ui_path }}"
         method: HEAD
         status_code: 200
         validate_certs: true
 
     - name: Show the installed interface
       ansible.builtin.debug:
-        msg: "Open {{ mailcow_url }}/ng/ and sign in with an existing mailcow account."
+        msg: "Open {{ mailcow_url }}{{ modern_ui_path }} and sign in with an existing mailcow account."

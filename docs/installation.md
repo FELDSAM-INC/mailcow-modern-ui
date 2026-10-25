@@ -65,7 +65,7 @@ python3 /opt/mailcow-modern-ui/scripts/manage.py activate --mailcow-dir "$MAILCO
 ```
 
 This installs `data/conf/nginx/site.restv2.custom`, runs `nginx -t`, and reloads nginx.
-If validation or reload fails, it restores the previous file.
+If validation or reload fails, it restores the previous routing files and URL selection.
 
 ## 8. Register scheduled jobs
 
@@ -93,6 +93,35 @@ curl -fsSI https://mail.example.org/ng/
 ```
 
 Open **https://mail.example.org/ng/** and use your existing mailcow account.
+
+## Optional: use `/` instead of `/ng/`
+
+After starting the current UI image, choose the root URL:
+
+```bash
+python3 /opt/mailcow-modern-ui/scripts/manage.py activate --mailcow-dir "$MAILCOW_DIR" --ui-path /
+```
+
+Open **https://mail.example.org/**. The classic interface remains available at
+**https://mail.example.org/index.php**. Old `/ng/` bookmarks, password-reset links,
+and SSO return URLs continue to work; existing identity-provider callback registrations
+can stay unchanged. Static assets still use `/ng/`.
+
+The helper verifies that the running UI image supports this mode before changing nginx.
+An older image must be updated first. Only the UI's declared routes are forwarded:
+mailcow's APIs, SOGo, DAV, ActiveSync, autodiscovery, ACME, PHP handlers, and internal
+listeners retain their existing routing. Query-bearing requests to `/` and non-GET/HEAD
+requests continue to use the classic handlers. Custom nginx routes sharing a UI namespace
+need an operator review; this is not a catch-all replacement of mailcow's web server.
+
+The selection is saved. Later `activate` commands without `--ui-path` preserve it.
+To switch back:
+
+```bash
+python3 /opt/mailcow-modern-ui/scripts/manage.py activate --mailcow-dir "$MAILCOW_DIR" --ui-path /ng/
+```
+
+Both switches test and reload nginx, with automatic restoration if activation fails.
 
 ## Fixed image versions
 

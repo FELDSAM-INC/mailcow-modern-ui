@@ -8,6 +8,11 @@ are local files in `screenshots/`, with capture dates, routes, and source revisi
 Share the [GitHub Pages gallery](https://feldsam-inc.github.io/mailcow-modern-ui/).
 You can also open `index.html` locally or serve this directory using any static web server.
 The gallery has no analytics, external fonts, or third-party JavaScript.
+It includes 28 screenshots (14 views in two themes), an Install menu for the manual and
+Ansible guides, and links to REST API v2. The colour control is a local preview: it changes
+the page accent and remembers the choice in this browser. It does not recolour screenshots
+or change a mail server. The page explains where administrators save real installation
+colours: **System configuration → Options → Customize**.
 
 ## Offline download
 

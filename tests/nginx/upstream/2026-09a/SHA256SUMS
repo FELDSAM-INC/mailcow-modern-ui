@@ -1,0 +1,2 @@
+9583717a000c6044e12f5f62f15181167a12231fdcef3db5ad9e3cd8ac052e01  tests/nginx/upstream/2026-09a/nginx.conf.j2
+eb5a8de0b62b3e2bf27af4f729881f7d6beedcf9297e09479533789725e73d71  tests/nginx/upstream/2026-09a/sites-default.conf.j2

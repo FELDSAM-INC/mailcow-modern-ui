@@ -55,7 +55,10 @@ location = /ng {
 # proxy_pass with a variable and no URI part passes the original request path (/ng/...) and query
 # through to the mailcowui-ng container unchanged.
 location ^~ /ng/ {
+    error_page 502 504 = @modern_ui_unavailable;
     resolver 127.0.0.11 valid=30s;
+    resolver_timeout 5s;
+    proxy_connect_timeout 5s;
     set $ng_upstream http://ng-mailcow:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -71,4 +74,12 @@ location ^~ /ng/ {
         # Upstream errors include the original request URI and cannot redact its credentials.
         error_log /dev/null;
     }
+}
+
+# Keep callback query strings out of mailcow's generic upstream-error page logs.
+location @modern_ui_unavailable {
+    access_log off;
+    error_log /dev/null;
+    default_type text/plain;
+    return 502 "The modern interface is temporarily unavailable.\n";
 }

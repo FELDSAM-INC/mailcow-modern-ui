@@ -7,6 +7,8 @@ all:
           ansible_user: root
           mailcow_dir: /opt/mailcow-dockerized
           mailcow_url: https://mail.example.org
+          # Optional: serve the new UI at / while retaining mailcow's internal routes.
+          # modern_ui_path: /
           # Pin image digests for repeatable deployments (optional):
           # modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:...
           # modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng@sha256:...

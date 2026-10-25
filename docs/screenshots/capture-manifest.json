@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-25T11:55:37.245Z",
+  "capturedAt": "2026-10-25T12:47:16.522Z",
   "sourceRevision": "3c0ea10d",
   "sampleData": true,
   "captures": [
@@ -114,6 +114,90 @@
       "scenario": "admin-mailboxes-30",
       "theme": "dark",
       "viewport": "390 × 844"
+    },
+    {
+      "file": "sign-in-light.jpg",
+      "route": "sign-in",
+      "scenario": "admin-password",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "account-overview-light.jpg",
+      "route": "account/overview",
+      "scenario": "account-mailbox",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "account-security-light.jpg",
+      "route": "account/two-factor",
+      "scenario": "account-mailbox",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "app-passwords-light.jpg",
+      "route": "account/app-passwords",
+      "scenario": "account-mailbox",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "customize-light.jpg",
+      "route": "system/customize/colours",
+      "scenario": "brand-colours-set",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "quarantine-light.jpg",
+      "route": "quarantine",
+      "scenario": "quarantine-admin",
+      "theme": "light",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "sign-in-dark.jpg",
+      "route": "sign-in",
+      "scenario": "admin-password",
+      "theme": "dark",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "account-overview-dark.jpg",
+      "route": "account/overview",
+      "scenario": "account-mailbox",
+      "theme": "dark",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "account-security-dark.jpg",
+      "route": "account/two-factor",
+      "scenario": "account-mailbox",
+      "theme": "dark",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "app-passwords-dark.jpg",
+      "route": "account/app-passwords",
+      "scenario": "account-mailbox",
+      "theme": "dark",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "customize-dark.jpg",
+      "route": "system/customize/colours",
+      "scenario": "brand-colours-set",
+      "theme": "dark",
+      "viewport": "1440 × 960"
+    },
+    {
+      "file": "quarantine-dark.jpg",
+      "route": "quarantine",
+      "scenario": "quarantine-admin",
+      "theme": "dark",
+      "viewport": "1440 × 960"
     }
   ]
 }

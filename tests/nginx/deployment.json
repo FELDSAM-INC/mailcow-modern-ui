@@ -1,0 +1,30 @@
+{
+  "rootRoutingVersion": 1,
+  "supportedUiPaths": ["/ng/", "/"],
+  "routeRoots": [
+    "account",
+    "administrators",
+    "alias-domains",
+    "aliases",
+    "api-keys",
+    "audit-log",
+    "dns",
+    "domain-templates",
+    "domains",
+    "filters",
+    "identity-providers",
+    "mailbox-templates",
+    "mailboxes",
+    "operations",
+    "pending-actions",
+    "quarantine",
+    "reset-password",
+    "resources",
+    "routing",
+    "sign-in",
+    "spam-filter",
+    "sso",
+    "sync-jobs",
+    "system"
+  ]
+}

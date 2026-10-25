@@ -35,6 +35,11 @@ Use the server's real HTTPS hostname, without a trailing slash.
 SSH keys are recommended; leave host key checking enabled.
 The inventory is ignored by Git.
 
+To serve the interface at `https://mail.example.org/`, set `modern_ui_path: /`.
+The default is `/ng/`. Keep this setting in your inventory for later runs; changing it
+back to `/ng/` restores the classic root page. See the
+[root URL behaviour](installation.md#optional-use--instead-of-ng) for endpoint compatibility.
+
 ## 4. Install
 
 ```bash
@@ -58,6 +63,7 @@ Ofelia restart. Pulling checks for a newer image; a new image can recreate its s
 | --- | --- | --- |
 | `mailcow_dir` | Required | Existing mailcow directory |
 | `mailcow_url` | Required | Public HTTPS origin |
+| `modern_ui_path` | `/ng/` | Browser URL path: `/ng/` or `/` |
 | `modern_ui_api_image` | `ghcr.io/feldsam-inc/mailcow-rest-v2:latest` | API image tag or digest |
 | `modern_ui_web_image` | `ghcr.io/feldsam-inc/mailcowui-ng:latest` | UI image tag or digest |
 | `modern_ui_tools_dir` | `/opt/mailcow-modern-ui` | Remote deployment helper directory |

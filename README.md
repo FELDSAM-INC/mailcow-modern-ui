@@ -17,7 +17,7 @@ light and dark themes, and a shared design across administration and account set
 - **Operations:** quarantine, queue management, containers, logs, and audit history.
 - **Account access:** administrator, domain administrator, and mailbox user views; password reset, two-factor authentication, and passkeys.
 - **Consistent controls:** search, filters, column selection, row actions, and expandable details.
-- **Your branding:** configurable logos and colours, with light and dark themes.
+- **Your branding:** configurable logos and colours in **System configuration → Options → Customize**, with light and dark themes. [Try a colour in the tour](https://feldsam-inc.github.io/mailcow-modern-ui/#customize).
 
 <p>
   <img src="docs/screenshots/mobile-mailboxes-light.jpg" width="240" alt="Mailbox management on mobile">
@@ -47,6 +47,8 @@ No application build or registry login is needed.
 
 The new UI is served at **`https://mail.example.org/ng/`** and the API at **`/api/v2/`**.
 Sign in with existing mailcow accounts. The classic interface remains at `/`.
+You can optionally [serve the new UI at `/`](docs/installation.md#optional-use--instead-of-ng);
+the classic interface then stays available at `/index.php`, with existing mailcow endpoints preserved.
 Installation adds two containers to the existing mailcow Compose project, keeps its
 custom overrides, and stores the application key privately. The API creates its own
 `restv2_` tables; it does not migrate mailcow's tables.
@@ -85,6 +87,29 @@ ansible-playbook -i ansible/inventory.example.yml ansible/install.yml --syntax-c
 
 The [gallery maintenance guide](docs/showcase.md) explains screenshot provenance,
 offline packaging, and GitHub Pages hosting.
+
+The separate routing integration check starts disposable Docker containers using the
+mailcow `2026-09a` nginx templates. It needs Jinja2 (also installed with Ansible):
+
+```bash
+python3 scripts/test-nginx.py
+```
+
+`scripts/test-ansible.py` also runs the real playbook against temporary local fixtures,
+checking inventory overrides, HTTPS verification, idempotence, and switching URL modes.
+Run it with root privileges using a Python environment containing Ansible; Docker mutations
+are simulated, while Compose validation is real. CI runs both integration scripts.
+
+It compares legacy routes and internal listeners before and after root activation,
+checks credential redaction during a UI outage, and switches back to `/ng/`.
+
+With a production build and Playwright installed in a neighbouring UI checkout, it can
+also verify the browser's router base, old bookmarks, sign-in and credential callbacks:
+
+```bash
+npm --prefix ../mailcowui-ng run build
+python3 scripts/test-nginx.py --ui-source ../mailcowui-ng --ui-dist ../mailcowui-ng/dist --browser-script ../mailcowui-ng/scripts/deploy/check-root.mjs
+```
 
 ## License
 

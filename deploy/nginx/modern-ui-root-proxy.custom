@@ -1,0 +1,18 @@
+# Included only by root-mode UI locations, never as a standalone server snippet.
+error_page 418 = @modern_ui_classic;
+error_page 502 504 = @modern_ui_unavailable;
+if ($request_method !~ ^(?:GET|HEAD)$) { return 418; }
+if ($server_port = 65510) { return 418; }
+if ($host ~* ^(?:autodiscover|autoconfig|mta-sts)\.) { return 418; }
+
+resolver 127.0.0.11 valid=30s;
+resolver_timeout 5s;
+proxy_connect_timeout 5s;
+set $modern_ui_upstream http://ng-mailcow:8080;
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_pass $modern_ui_upstream;
+# Reset/SSO URLs can contain credentials, including on upstream error messages.
+access_log off;
+error_log /dev/null;

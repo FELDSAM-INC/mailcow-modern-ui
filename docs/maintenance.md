@@ -63,6 +63,8 @@ docker compose restart ofelia-mailcow
 ```
 
 Check both public URLs as in the [installation guide](installation.md#9-verify-and-sign-in).
+Use `/` for the UI check if you selected root mode. Manual activation preserves the saved
+URL selection; Ansible applies `modern_ui_path` from your inventory on every run.
 After updating **mailcow itself**, verify that its schema is supported by the API before
 updating these containers. The API readiness check enforces its supported schema list.
 
@@ -77,6 +79,8 @@ python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILC
 Replace the placeholders, then repeat the pull, start, activate, and Ofelia commands
 above. Check compatibility notes before downgrading: changing images does not reverse
 database migrations. If a release needs a database rollback, restore its matching backup.
+Before reverting to a UI image without root-routing support, switch back to `/ng/` using
+`activate --ui-path /ng/ --mailcow-dir "$MAILCOW_DIR"`.
 
 ## Uninstall the addon
 
@@ -105,6 +109,8 @@ docker compose restart ofelia-mailcow
 The managed Compose include is removed; other overrides remain. The classic interface
 continues to work. The application key, local configuration backups, and API database
 tables remain for a later reinstall. Mail, mailboxes, and mailcow volumes are retained.
+Deactivation removes all managed nginx routes, including the optional root snippets.
+The saved URL preference remains for a later reinstall.
 Do not use `docker compose down -v` to remove this addon: it targets the entire mailcow project.
 
 ## Troubleshooting

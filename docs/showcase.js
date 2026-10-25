@@ -5,10 +5,39 @@ const dialog = document.querySelector('#image-viewer')
 const viewerImage = document.querySelector('#viewer-image')
 const imageWrap = document.querySelector('.viewer-image-wrap')
 let theme = 'light'
+let accent = null
+try {
+  const saved = localStorage.getItem('mailcow-showcase-accent')
+  if (/^#[a-f\d]{6}$/i.test(saved || '')) accent = saved
+} catch { /* Browser storage is optional. */ }
+
+function applyAccent() {
+  for (const variable of ['--green', '--on-green', '--tint']) root.style.removeProperty(variable)
+  const colour = accent || (theme === 'dark' ? '#53c58a' : '#18794e')
+  if (accent) {
+    root.style.setProperty('--green', accent)
+    const channels = [1, 3, 5].map((offset) => Number.parseInt(accent.slice(offset, offset + 2), 16))
+    const brightness = channels[0] * 0.299 + channels[1] * 0.587 + channels[2] * 0.114
+    root.style.setProperty('--on-green', brightness > 150 ? '#14181d' : '#ffffff')
+    root.style.setProperty('--tint', 'color-mix(in srgb, var(--green) 12%, var(--surface))')
+  }
+  document.querySelector('#accent-colour').value = colour
+  document.querySelector('#accent-value').textContent = colour.toUpperCase()
+}
+
+function selectAccent(value) {
+  accent = /^#[a-f\d]{6}$/i.test(value || '') ? value : null
+  try {
+    if (accent) localStorage.setItem('mailcow-showcase-accent', accent)
+    else localStorage.removeItem('mailcow-showcase-accent')
+  } catch { /* Preview still works without storage. */ }
+  applyAccent()
+}
 
 function setTheme(next) {
   theme = next === 'dark' ? 'dark' : 'light'
   root.dataset.theme = theme
+  applyAccent()
   themeButtons.forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.setTheme === theme))
   })
@@ -32,6 +61,22 @@ setTheme(initialTheme)
 document.querySelector('.theme-control').hidden = false
 themeButtons.forEach((button) => {
   button.addEventListener('click', () => setTheme(button.dataset.setTheme))
+})
+
+document.querySelector('#accent-colour').addEventListener('input', (event) => selectAccent(event.target.value))
+document.querySelector('#reset-accent').addEventListener('click', () => selectAccent(null))
+document.querySelectorAll('[data-accent]').forEach((button) => {
+  button.addEventListener('click', () => selectAccent(button.dataset.accent))
+})
+const installMenu = document.querySelector('.install-menu')
+document.addEventListener('click', (event) => {
+  if (!installMenu.contains(event.target)) installMenu.open = false
+})
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && installMenu.open) {
+    installMenu.open = false
+    installMenu.querySelector('summary').focus()
+  }
 })
 
 document.querySelectorAll('.screenshot').forEach((button) => {

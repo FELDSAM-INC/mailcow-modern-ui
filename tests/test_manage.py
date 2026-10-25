@@ -212,6 +212,81 @@ COMPOSE_PROJECT_NAME=modern-ui-test
             self.assertFalse(manage.routes(self.root))
             self.assertEqual(execute.call_count, 2)
 
+    def root_manifest(self):
+        return json.dumps(
+            {
+                "rootRoutingVersion": 1,
+                "supportedUiPaths": ["/ng/", "/"],
+                "routeRoots": ["domains", "sign-in", "sso", "reset-password"],
+            }
+        )
+
+    def test_root_activation_preserves_the_selection_on_updates_and_can_switch_back(self):
+        self.configure()
+        with patch.object(manage, "compose", return_value=self.root_manifest()):
+            self.assertTrue(manage.routes(self.root, ui_path="/"))
+            self.assertFalse(manage.routes(self.root))
+            snippet = self.root / "data/conf/nginx/site.modern-ui-root.custom"
+            self.assertIn("domains|reset-password|sign-in|sso", snippet.read_text())
+            self.assertEqual((self.root / "modern-ui/ui-path").read_text(), "/\n")
+            self.assertTrue(manage.routes(self.root, ui_path="/ng/"))
+            self.assertFalse(snippet.exists())
+            self.assertFalse((self.root / "data/conf/nginx/modern-ui-root-proxy.custom").exists())
+            self.assertEqual((self.root / "modern-ui/ui-path").read_text(), "/ng/\n")
+
+    def test_root_activation_rejects_old_images_and_internal_route_collisions(self):
+        self.configure()
+        invalid = [
+            "<html>old app</html>",
+            "{}",
+            json.dumps({"rootRoutingVersion": 1, "supportedUiPaths": ["/"], "routeRoots": ["api"]}),
+            json.dumps(
+                {
+                    "rootRoutingVersion": 1,
+                    "supportedUiPaths": ["/"],
+                    "routeRoots": ["x); return 200;"],
+                }
+            ),
+        ]
+        for manifest in invalid:
+            with (
+                self.subTest(manifest=manifest),
+                patch.object(manage, "compose", return_value=manifest),
+            ):
+                with self.assertRaises(manage.InstallError):
+                    manage.routes(self.root, ui_path="/")
+                self.assertFalse(
+                    (self.root / "data/conf/nginx/site.modern-ui-root.custom").exists()
+                )
+                self.assertFalse((self.root / "modern-ui/ui-path").exists())
+
+    def test_failed_root_activation_restores_all_files_and_previous_mode(self):
+        self.configure()
+        with patch.object(manage, "compose", return_value=""):
+            manage.routes(self.root)
+        old = (self.root / "data/conf/nginx/site.restv2.custom").read_bytes()
+        with patch.object(
+            manage,
+            "compose",
+            side_effect=[self.root_manifest(), manage.InstallError("bad nginx"), "", ""],
+        ):
+            with self.assertRaises(manage.InstallError):
+                manage.routes(self.root, ui_path="/")
+        self.assertEqual((self.root / "data/conf/nginx/site.restv2.custom").read_bytes(), old)
+        self.assertEqual((self.root / "modern-ui/ui-path").read_text(), "/ng/\n")
+        self.assertFalse((self.root / "data/conf/nginx/site.modern-ui-root.custom").exists())
+        self.assertFalse((self.root / "data/conf/nginx/modern-ui-root-proxy.custom").exists())
+
+    def test_deactivation_removes_both_modes_without_rotating_key(self):
+        self.configure()
+        key = (self.root / "modern-ui/secrets.env").read_bytes()
+        with patch.object(manage, "compose", return_value=self.root_manifest()):
+            manage.routes(self.root, ui_path="/")
+            self.assertTrue(manage.routes(self.root, remove=True))
+            self.assertFalse(manage.routes(self.root, remove=True))
+        self.assertFalse(list((self.root / "data/conf/nginx").glob("*.custom")))
+        self.assertEqual((self.root / "modern-ui/secrets.env").read_bytes(), key)
+
     def test_detach_retains_key_and_other_overrides(self):
         (self.root / "docker-compose.override.yml").write_text(
             "services:\n  nginx-mailcow:\n    restart: always\n"

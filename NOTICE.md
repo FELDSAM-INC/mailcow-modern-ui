@@ -13,3 +13,9 @@ This repository includes screenshots of those components, not the application's 
 
 mailcow is the upstream project's name. This community addon is maintained independently;
 the name and screenshots do not imply endorsement by mailcow or TailAdmin.
+
+`tests/nginx/upstream/2026-09a/` contains unmodified nginx templates from
+[mailcow/mailcow-dockerized tag 2026-09a](https://github.com/mailcow/mailcow-dockerized/tree/2026-09a/data/assets/templates),
+copyright the mailcow contributors, distributed under GPL-3.0. `SHA256SUMS` records
+their original bytes. These templates are test fixtures; installation does not replace
+mailcow's own templates.

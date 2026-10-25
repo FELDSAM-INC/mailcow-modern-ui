@@ -26,6 +26,37 @@ include:
 # END mailcow-modern-ui
 """
 OWNER = "mailcow-modern-ui\n"
+ROOT_FILES = ("site.modern-ui-root.custom", "modern-ui-root-proxy.custom")
+RESERVED_ROOTS = {
+    "api",
+    "ng",
+    "sogo",
+    "sogo-auth",
+    "sogo-auth-verify",
+    "oauth",
+    "principals",
+    "microsoft-server-activesync",
+    "autodiscover",
+    "autoconfig",
+    "mail",
+    "mta-sts",
+    "inc",
+    "lang",
+    "css",
+    "js",
+    "img",
+    "fonts",
+    "cache",
+    "edit",
+    "qhandler",
+    "mobileconfig",
+    "json_api",
+    "resource",
+    "admin",
+    "domainadmin",
+    "user",
+    "index",
+}
 
 
 class InstallError(Exception):
@@ -216,10 +247,10 @@ def configure(root, api_image, ui_image):
                 "The API or UI is already configured. See migration instructions; no services were replaced."
             )
         text = text.rstrip() + ("\n\n" if text.strip() else "") + BLOCK
-    nginx = root / "data/conf/nginx/site.restv2.custom"
-    if nginx.exists() and not managed:
+    nginx_files = [root / "data/conf/nginx" / name for name in ("site.restv2.custom", *ROOT_FILES)]
+    if any(path.exists() for path in nginx_files) and not managed:
         raise InstallError(
-            "Existing site.restv2.custom found. Migrate the existing installation first."
+            "Existing site.restv2.custom or root-mode files found. Migrate the existing installation first."
         )
     directory = private_directory(root)
     key = key_value(root, directory)
@@ -249,29 +280,86 @@ def configure(root, api_image, ui_image):
     return changed
 
 
-def routes(root, remove=False):
+def root_route_pattern(root):
+    """Only an image declaring support may opt in, and never claim internal endpoints."""
+    try:
+        raw = compose(
+            root,
+            "exec",
+            "-T",
+            "ng-mailcow",
+            "wget",
+            "-q",
+            "-O",
+            "-",
+            "http://127.0.0.1:8080/ng/deployment.json",
+        )
+    except InstallError:
+        raise InstallError(
+            "Cannot read the UI deployment manifest. Update and start the UI image before enabling /."
+        ) from None
+    try:
+        manifest = json.loads(raw)
+        roots = manifest["routeRoots"]
+        valid = (
+            manifest["rootRoutingVersion"] == 1
+            and "/" in manifest["supportedUiPaths"]
+            and isinstance(roots, list)
+            and 0 < len(roots) <= 64
+            and all(
+                isinstance(name, str)
+                and re.fullmatch(r"[a-z][a-z0-9-]{0,63}", name)
+                and name not in RESERVED_ROOTS
+                for name in roots
+            )
+        )
+        if not valid:
+            raise ValueError()
+    except (ValueError, TypeError, KeyError):
+        raise InstallError(
+            "The installed UI does not declare compatible root routing. Update the UI image before enabling /."
+        ) from None
+    return "|".join(sorted(set(roots)))
+
+
+def routes(root, remove=False, ui_path=None):
     preflight(root)
     if not owned(root):
         raise InstallError("Run configure before managing nginx routes.")
-    path = root / "data/conf/nginx/site.restv2.custom"
-    previous = snapshot(path)
-    if remove and previous is None:
-        return False
+    directory = root / "data/conf/nginx"
+    mode = root / "modern-ui/ui-path"
+    mode_before = snapshot(mode)
+    selected = ui_path or (mode_before[0].decode().strip() if mode_before else "/ng/")
+    if selected not in ("/", "/ng/"):
+        raise InstallError("UI path must be / or /ng/.")
+    targets = {directory / name: None for name in ("site.restv2.custom", *ROOT_FILES)}
     if not remove:
-        desired = (SOURCE / "deploy/nginx/site.restv2.custom").read_bytes()
-        if previous == (desired, 0o644):
-            return False
-    if previous:
-        write(root / "modern-ui/nginx.before-last-change", previous[0])
+        targets[directory / "site.restv2.custom"] = (
+            (SOURCE / "deploy/nginx/site.restv2.custom").read_bytes(),
+            0o644,
+        )
+        targets[mode] = ((selected + "\n").encode(), 0o600)
+        if selected == "/":
+            pattern = root_route_pattern(root)
+            for name in ROOT_FILES:
+                content = (
+                    (SOURCE / "deploy/nginx" / name).read_text().replace("@ROOT_ROUTES@", pattern)
+                )
+                targets[directory / name] = (content.encode(), 0o644)
+    before = {path: snapshot(path) for path in targets}
+    if all(before[path] == desired for path, desired in targets.items()):
+        return False
+    original = before[directory / "site.restv2.custom"]
+    if original:
+        write(root / "modern-ui/nginx.before-last-change", original[0])
     try:
-        if remove:
-            path.unlink()
-        else:
-            write(path, desired, 0o644)
+        for path, desired in targets.items():
+            restore(path, desired)
         compose(root, "exec", "-T", "nginx-mailcow", "nginx", "-t")
         compose(root, "exec", "-T", "nginx-mailcow", "nginx", "-s", "reload")
     except (InstallError, OSError):
-        restore(path, previous)
+        for path, previous in before.items():
+            restore(path, previous)
         # A failed reload must also put the previous working routes back in memory.
         try:
             compose(root, "exec", "-T", "nginx-mailcow", "nginx", "-t")
@@ -279,7 +367,7 @@ def routes(root, remove=False):
         except InstallError:
             pass
         raise InstallError(
-            "nginx activation failed. The previous file was restored; inspect nginx on the server."
+            "nginx activation failed. The previous file was restored together with the other routing files and UI path; inspect nginx on the server."
         ) from None
     return True
 
@@ -317,6 +405,11 @@ def main():
     parser.add_argument("action", choices=["configure", "activate", "deactivate", "detach"])
     parser.add_argument("--mailcow-dir", type=Path, required=True)
     parser.add_argument(
+        "--ui-path",
+        choices=["/ng/", "/"],
+        help="UI browser path for activate; omitting it preserves the installed mode",
+    )
+    parser.add_argument(
         "--api-image",
         type=image_reference,
         default="ghcr.io/feldsam-inc/mailcow-rest-v2:latest",
@@ -327,6 +420,8 @@ def main():
         default="ghcr.io/feldsam-inc/mailcowui-ng:latest",
     )
     args = parser.parse_args()
+    if args.ui_path is not None and args.action != "activate":
+        parser.error("--ui-path is only supported with activate")
     root = args.mailcow_dir.resolve()
     try:
         if args.action == "configure":
@@ -334,7 +429,7 @@ def main():
         elif args.action == "detach":
             changed = detach(root)
         else:
-            changed = routes(root, remove=args.action == "deactivate")
+            changed = routes(root, remove=args.action == "deactivate", ui_path=args.ui_path)
         print(json.dumps({"changed": changed, "action": args.action}))
     except (InstallError, OSError) as error:
         print(str(error), file=sys.stderr)
