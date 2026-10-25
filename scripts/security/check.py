@@ -109,8 +109,16 @@ def image(reference, architecture):
     suffix = architecture.replace('/', '-')
     report = REPORTS / ('image-' + suffix + '.json')
     run(trivy, 'image', *common, '--format=json', '--output=' + str(report), reference)
+    verify_image_platform(report, architecture)
     run(trivy, 'convert', '--format=cyclonedx', '--output=' + str(REPORTS / ('sbom-' + suffix + '.cdx.json')), str(report))
     run(trivy, 'image', *common, '--severity=HIGH,CRITICAL', '--ignore-unfixed', '--exit-code=1', reference)
+
+
+def verify_image_platform(report, architecture):
+    metadata = json.loads(report.read_text()).get('Metadata', {}).get('ImageConfig', {})
+    actual = metadata.get('os', '') + '/' + metadata.get('architecture', '')
+    if actual != architecture:
+        raise RuntimeError('Image scan platform mismatch: expected ' + architecture + ', got ' + actual)
 
 
 def main():

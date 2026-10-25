@@ -26,8 +26,10 @@ class SecurityRunnerTests(unittest.TestCase):
         self.assertIn('--log-opts=--all', args)
 
     def test_image_scan_keeps_complete_report_before_applying_gate(self):
-        with patch.object(checker, 'binary', return_value='trivy'), patch.object(checker, 'run') as run:
+        with patch.object(checker, 'binary', return_value='trivy'), patch.object(checker, 'run') as run, \
+                patch.object(checker, 'verify_image_platform') as verify:
             checker.image('example.invalid/image@sha256:' + 'a' * 64, 'linux/arm64')
+        self.assertEqual(verify.call_args.args[1], 'linux/arm64')
         report, sbom, gate = [call.args for call in run.call_args_list]
         self.assertIn('--platform=linux/arm64', report)
         self.assertNotIn('--ignore-unfixed', report)
@@ -35,6 +37,16 @@ class SecurityRunnerTests(unittest.TestCase):
         self.assertIn('--format=cyclonedx', sbom)
         self.assertIn('--ignore-unfixed', gate)
         self.assertIn('--exit-code=1', gate)
+
+    def test_wrong_architecture_or_missing_metadata_cannot_pass_image_gate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / 'image.json'
+            for metadata in [{}, {'ImageConfig': {'os': 'linux', 'architecture': 'amd64'}}]:
+                report.write_text(json.dumps({'Metadata': metadata}))
+                with self.assertRaisesRegex(RuntimeError, 'platform mismatch'):
+                    checker.verify_image_platform(report, 'linux/arm64')
+            report.write_text(json.dumps({'Metadata': {'ImageConfig': {'os': 'linux', 'architecture': 'arm64'}}}))
+            checker.verify_image_platform(report, 'linux/arm64')
 
     def test_scanner_failure_propagates(self):
         with patch.object(checker, 'binary', return_value='gitleaks'), patch.object(
