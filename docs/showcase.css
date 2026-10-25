@@ -156,7 +156,8 @@ h3 {
   color: var(--green);
 }
 .install-menu { position: relative; }
-.install-menu summary { cursor: pointer; list-style: none; color: var(--muted); }
+.install-menu summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; color: var(--muted); }
+.install-menu summary svg { display: block; width: 1em; height: 1em; flex: none; }
 .install-menu summary::-webkit-details-marker { display: none; }
 .install-menu summary:hover, .install-menu[open] summary { color: var(--green); }
 .install-menu summary:focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
