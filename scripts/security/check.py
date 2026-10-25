@@ -69,7 +69,8 @@ def source():
                                         + spec['revision'] + '/' + path, digest))
     run('docker', 'run', '--rm', '--network=none', '--cap-drop=ALL',
         '--security-opt=no-new-privileges', '--user', f'{os.getuid()}:{os.getgid()}',
-        '-e', 'SEMGREP_USER_DATA_FOLDER=/tmp/semgrep',
+        '-e', 'SEMGREP_LOG_FILE=/tmp/semgrep.log',
+        '-e', 'SEMGREP_SETTINGS_FILE=/tmp/semgrep-settings.yml',
         '-v', str(ROOT) + ':/src:ro', '-v', str(rules) + ':/rules:ro',
         '-v', str(REPORTS) + ':/reports', '-w', '/src', spec['image'],
         'semgrep', 'scan', '--config=/rules', '--metrics=off', '--disable-version-check',
