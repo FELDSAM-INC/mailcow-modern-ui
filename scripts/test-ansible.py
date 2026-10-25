@@ -96,7 +96,13 @@ if 'wget' in args:
     print(MANIFEST)
 elif 'up' in args:
     state = root / 'started'
-    print('Container fixture Running' if state.exists() else 'Container fixture Created', file=sys.stderr)
+    replacement = root / 'replace-image'
+    if replacement.exists():
+        stream = sys.stdout if replacement.read_text() == 'stdout' else sys.stderr
+        print('Container fixture Recreated', file=stream)
+        replacement.unlink()
+    else:
+        print('Container fixture Running' if state.exists() else 'Container fixture Created', file=sys.stderr)
     state.touch()
 elif not any(word in args for word in ['pull', 'exec', 'restart']):
     raise SystemExit('Unexpected Docker operation')
@@ -125,7 +131,11 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             "MODERN_UI_TEST_ROOT": str(root),
             "ANSIBLE_NOCOLOR": "1",
         }
-        for attempt, path in enumerate(["/", "/", "/ng/"], 1):
+        expected_restarts = 0
+        for attempt, path in enumerate(["/", "/", "/ng/", "/ng/", "/ng/", "/ng/"], 1):
+            if attempt in (4, 5):
+                # A newer image under the same tag changes no installer files.
+                (root / "replace-image").write_text("stderr" if attempt == 4 else "stdout")
             options["modern_ui_path"] = path
             inventory = root / "inventory.json"
             inventory.write_text(
@@ -141,8 +151,16 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             if result.returncode:
                 raise AssertionError(result.stdout + result.stderr)
             recap = next(line for line in result.stdout.splitlines() if "unreachable=" in line)
-            if attempt == 2:
+            if attempt in (2, 6):
                 assert re.search(r"changed=0\b", recap), recap
+            else:
+                expected_restarts += 1
+            commands = [
+                json.loads(line) for line in (root / "commands.jsonl").read_text().splitlines()
+            ]
+            assert sum("restart" in command for command in commands) == expected_restarts, (
+                f"Pass {attempt}: Ofelia must rediscover replacement containers, and remain unchanged on reruns"
+            )
             assert (root / "modern-ui/ui-path").read_text().strip() == path
             assert (root / "data/conf/nginx/site.modern-ui-root.custom").exists() == (path == "/")
             print(f"Pass {attempt} ({path}): {recap.strip()}")
@@ -155,7 +173,7 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             "Inventory pull=false was ignored"
         )
         print(
-            "Passed: inventory overrides, real Compose, HTTPS, idempotence and root-mode switchback. Docker mutations were simulated."
+            "Passed: inventory overrides, real Compose, HTTPS, idempotence, root-mode switchback and scheduler refresh after image updates. Docker mutations were simulated."
         )
     finally:
         if server:

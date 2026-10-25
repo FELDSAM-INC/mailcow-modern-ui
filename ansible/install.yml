@@ -91,7 +91,10 @@
           - ng-mailcow
         chdir: "{{ mailcow_dir }}"
       register: modern_ui_start
-      changed_when: modern_ui_start.stderr is search('(?m)\b(Created|Recreated|Started)\b')
+      # Compose versions can write progress to either output stream.
+      changed_when: >-
+        (modern_ui_start.stdout ~ ' ' ~ modern_ui_start.stderr)
+        is search('Created|Recreated|Started')
 
     - name: Install and validate nginx routes, restoring the previous file on failure
       ansible.builtin.command:
