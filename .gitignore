@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+ansible/inventory.yml
+ansible/*.retry
+.DS_Store

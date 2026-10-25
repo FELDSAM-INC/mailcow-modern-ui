@@ -1,0 +1,126 @@
+---
+- name: Install or update mailcow Modern UI
+  hosts: mailcow
+  become: true
+  gather_facts: false
+  serial: 1
+  vars:
+    modern_ui_source: "{{ playbook_dir }}/.."
+    modern_ui_tools_dir: /opt/mailcow-modern-ui
+    modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2:latest
+    modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng:latest
+    modern_ui_pull: true
+  tasks:
+    - name: Check required settings
+      ansible.builtin.assert:
+        that:
+          - not ansible_check_mode
+          - mailcow_dir is defined
+          - mailcow_dir is match('^/')
+          - mailcow_url is defined
+          - mailcow_url is match('^https://[^/]+$')
+        fail_msg: >-
+          Set mailcow_dir and mailcow_url in your inventory. This playbook applies
+          changes; use --syntax-check for syntax validation, not --check.
+
+    - name: Create deployment tools directories
+      ansible.builtin.file:
+        path: "{{ modern_ui_tools_dir }}/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - scripts
+        - deploy/nginx
+
+    - name: Copy the shared installation files
+      ansible.builtin.copy:
+        src: "{{ modern_ui_source }}/{{ item }}"
+        dest: "{{ modern_ui_tools_dir }}/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - scripts/manage.py
+        - deploy/compose.yml
+        - deploy/nginx/site.restv2.custom
+        - deploy/sources.json
+
+    - name: Configure the addon and preserve its existing application key
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ modern_ui_tools_dir }}/scripts/manage.py"
+          - configure
+          - --mailcow-dir
+          - "{{ mailcow_dir }}"
+          - --api-image
+          - "{{ modern_ui_api_image }}"
+          - --ui-image
+          - "{{ modern_ui_web_image }}"
+      register: modern_ui_configure
+      changed_when: modern_ui_configure.rc == 0 and (modern_ui_configure.stdout | from_json).changed
+
+    - name: Pull the two published images
+      ansible.builtin.command:
+        argv: [docker, compose, pull, restv2-mailcow, ng-mailcow]
+        chdir: "{{ mailcow_dir }}"
+      when: modern_ui_pull | bool
+      changed_when: false
+
+    - name: Start the API and UI and wait for readiness
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - up
+          - -d
+          - --no-deps
+          - --wait
+          - --wait-timeout
+          - '180'
+          - restv2-mailcow
+          - ng-mailcow
+        chdir: "{{ mailcow_dir }}"
+      register: modern_ui_start
+      changed_when: modern_ui_start.stderr is search('(?m)\b(Created|Recreated|Started)\b')
+
+    - name: Install and validate nginx routes, restoring the previous file on failure
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ modern_ui_tools_dir }}/scripts/manage.py"
+          - activate
+          - --mailcow-dir
+          - "{{ mailcow_dir }}"
+      register: modern_ui_routes
+      changed_when: modern_ui_routes.rc == 0 and (modern_ui_routes.stdout | from_json).changed
+
+    - name: Refresh Ofelia's container job discovery
+      ansible.builtin.command:
+        argv: [docker, compose, restart, ofelia-mailcow]
+        chdir: "{{ mailcow_dir }}"
+      when: modern_ui_configure.changed or modern_ui_start.changed or modern_ui_routes.changed
+      changed_when: true
+
+    - name: Verify API readiness over HTTPS
+      ansible.builtin.uri:
+        url: "{{ mailcow_url }}/api/v2/health/ready"
+        status_code: 200
+        validate_certs: true
+      register: modern_ui_health
+      until: modern_ui_health.status | default(0) == 200
+      retries: 6
+      delay: 5
+
+    - name: Verify the UI over HTTPS
+      ansible.builtin.uri:
+        url: "{{ mailcow_url }}/ng/"
+        method: HEAD
+        status_code: 200
+        validate_certs: true
+
+    - name: Show the installed interface
+      ansible.builtin.debug:
+        msg: "Open {{ mailcow_url }}/ng/ and sign in with an existing mailcow account."

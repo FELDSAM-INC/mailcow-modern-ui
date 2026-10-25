@@ -1,0 +1,194 @@
+# Shared installation template. Render with scripts/manage.py configure.
+services:
+  restv2-mailcow:
+    image: "@API_IMAGE@"
+    env_file: ./modern-ui/secrets.env
+    restart: always
+    read_only: true
+    tmpfs:
+      - /app/storage:uid=82,gid=82,mode=0755
+      - /app/bootstrap/cache:uid=82,gid=82,mode=0755
+      - /tmp
+    depends_on:
+      - mysql-mailcow
+      - redis-mailcow
+    dns:
+      - ${IPV4_NETWORK:-172.22.1}.254
+    dns_opt:
+      - timeout:2
+      - attempts:2
+    environment:
+      - APP_ENV=production
+      - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+      - ADDITIONAL_SERVER_NAMES=${ADDITIONAL_SERVER_NAMES:-}
+      - TZ=${TZ}
+      - DBHOST=${DBHOST:-mysql-mailcow}
+      - DBNAME=${DBNAME}
+      - DBUSER=${DBUSER}
+      - DBPASS=${DBPASS}
+      - REDISHOST=${REDISHOST:-redis-mailcow}
+      - REDISPASS=${REDISPASS}
+      - REDIS_SLAVEOF_IP=${REDIS_SLAVEOF_IP:-}
+      - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
+      - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
+      - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
+      - WEBAUTHN_ONLY_TRUSTED_VENDORS=${WEBAUTHN_ONLY_TRUSTED_VENDORS:-n}
+      - SKIP_SOGO=${SKIP_SOGO:-n}
+      - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
+      - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
+      - SKIP_CLAMD=${SKIP_CLAMD:-n}
+      - SKIP_OLEFY=${SKIP_OLEFY:-n}
+      - LOG_LINES=${LOG_LINES:-9999}
+      - RESTV2_SASL_LOG_SERVICE=${RESTV2_SASL_LOG_SERVICE:-MAILCOWUI}
+      - RESTV2_DEFAULT_UI_NAME=${RESTV2_DEFAULT_UI_NAME:-}
+      - RESTV2_DEFAULT_LOGO_URL=${RESTV2_DEFAULT_LOGO_URL:-/img/cow_mailcow.svg}
+      - RESTV2_DEFAULT_LOGO_DARK_URL=${RESTV2_DEFAULT_LOGO_DARK_URL:-/img/cow_mailcow.svg}
+      - RESTV2_SIGNIN_MAX_FAILURES=${RESTV2_SIGNIN_MAX_FAILURES:-10}
+      - RESTV2_SIGNIN_FAILURE_WINDOW=${RESTV2_SIGNIN_FAILURE_WINDOW:-900}
+      - RESTV2_CHALLENGE_TTL=${RESTV2_CHALLENGE_TTL:-300}
+      - RESTV2_AUDIT_RETENTION_DAYS=${RESTV2_AUDIT_RETENTION_DAYS:-365}
+      - RESTV2_YUBICO_VERIFY_URL=${RESTV2_YUBICO_VERIFY_URL:-https://api.yubico.com/wsapi/2.0/verify}
+      - RESTV2_MAILCOW_INC_DIR=${RESTV2_MAILCOW_INC_DIR:-/mailcow/web/inc}
+      - RESTV2_DOCKERAPI_URL=${RESTV2_DOCKERAPI_URL:-https://dockerapi:443}
+      - RESTV2_MEMCACHED_HOST=${RESTV2_MEMCACHED_HOST:-memcached}
+      - RESTV2_MEMCACHED_PORT=${RESTV2_MEMCACHED_PORT:-11211}
+      - RESTV2_DEFAULT_DKIM_SELECTOR=${RESTV2_DEFAULT_DKIM_SELECTOR:-dkim}
+      - RESTV2_DKIM_DNS_PUBLICATION=${RESTV2_DKIM_DNS_PUBLICATION:-n}
+      - MAILCOW_PASS_SCHEME=${MAILCOW_PASS_SCHEME:-BLF-CRYPT}
+      - MAILDIR_GC_TIME=${MAILDIR_GC_TIME:-7200}
+      - CLUSTERMODE=${CLUSTERMODE:-}
+      - MASTER=${MASTER:-y}
+      - RESTV2_MAILBOX_CUSTOM_ATTRIBUTE_LIMIT=${RESTV2_MAILBOX_CUSTOM_ATTRIBUTE_LIMIT:-}
+      - RESTV2_BULK_LIMIT=${RESTV2_BULK_LIMIT:-}
+      - RESTV2_IDP_TIMEOUT=${RESTV2_IDP_TIMEOUT:-7}
+      - RESTV2_IDP_RETRY_AFTER=${RESTV2_IDP_RETRY_AFTER:-30}
+      - RESTV2_SSO_PENDING_TTL=${RESTV2_SSO_PENDING_TTL:-600}
+      - RESTV2_SSO_RENEWAL_INTERVAL=${RESTV2_SSO_RENEWAL_INTERVAL:-300}
+      - RESTV2_SSO_RETURN_PATH=${RESTV2_SSO_RETURN_PATH:-/ng/sso/return}
+      - RESTV2_ISPCONFIG_URL=${RESTV2_ISPCONFIG_URL:-}
+      - RESTV2_ISPCONFIG_USERNAME=${RESTV2_ISPCONFIG_USERNAME:-}
+      - RESTV2_ISPCONFIG_PASSWORD=${RESTV2_ISPCONFIG_PASSWORD:-}
+      - RESTV2_ISPCONFIG_DNS_SERVER_ID=${RESTV2_ISPCONFIG_DNS_SERVER_ID:-1}
+      - RESTV2_ISPCONFIG_VERIFY_TLS=${RESTV2_ISPCONFIG_VERIFY_TLS:-y}
+      - RESTV2_ISPCONFIG_TIMEOUT=${RESTV2_ISPCONFIG_TIMEOUT:-15}
+      - RESTV2_SELF_SERVICE=${RESTV2_SELF_SERVICE:-restv2-mailcow}
+      - RESTV2_PROTECTED_CONTAINERS=${RESTV2_PROTECTED_CONTAINERS:-dockerapi-mailcow,mysql-mailcow,redis-mailcow,nginx-mailcow,restv2-mailcow}
+      - RESTV2_CONTAINER_ROLES=${RESTV2_CONTAINER_ROLES:-}
+      - RESTV2_POSTFIX_CONTAINER=${RESTV2_POSTFIX_CONTAINER:-postfix-mailcow}
+      - RESTV2_DOVECOT_CONTAINER=${RESTV2_DOVECOT_CONTAINER:-dovecot-mailcow}
+      - RESTV2_BAN_SERVICE_CONTAINER=${RESTV2_BAN_SERVICE_CONTAINER:-netfilter-mailcow}
+      - RESTV2_UPDATE_CHECK=${RESTV2_UPDATE_CHECK:-y}
+      - RESTV2_UPDATE_SOURCE_URL=${RESTV2_UPDATE_SOURCE_URL:-}
+      - RESTV2_UPDATE_STABLE_BRANCH=${RESTV2_UPDATE_STABLE_BRANCH:-master}
+      - RESTV2_IP_CHECK_IPV4_URL=${RESTV2_IP_CHECK_IPV4_URL:-http://ipv4.mailcow.email}
+      - RESTV2_IP_CHECK_IPV6_URL=${RESTV2_IP_CHECK_IPV6_URL:-http://ipv6.mailcow.email}
+      - RESTV2_RSPAMD_SOCKET=${RESTV2_RSPAMD_SOCKET:-/var/lib/rspamd/rspamd.sock}
+      - RESTV2_RSPAMD_TIMEOUT=${RESTV2_RSPAMD_TIMEOUT:-30}
+      - RESTV2_RELEASE_SMTP_HOST=${RESTV2_RELEASE_SMTP_HOST:-postfix}
+      - RESTV2_RELEASE_SMTP_PORT=${RESTV2_RELEASE_SMTP_PORT:-590}
+      - RESTV2_RELEASE_SMTP_TIMEOUT=${RESTV2_RELEASE_SMTP_TIMEOUT:-30}
+      - RESTV2_QUARANTINE_CONTENT_LIMIT=${RESTV2_QUARANTINE_CONTENT_LIMIT:-10485760}
+      - RESTV2_QUARANTINE_DEFAULT_TEMPLATE=${RESTV2_QUARANTINE_DEFAULT_TEMPLATE:-}
+      - RESTV2_TEMPLATE_RENDER_TIMEOUT=${RESTV2_TEMPLATE_RENDER_TIMEOUT:-5}
+      - RESTV2_ROUTING_TEST_SENDER=${RESTV2_ROUTING_TEST_SENDER:-relay@example.org}
+      - RESTV2_ROUTING_TEST_RECIPIENT=${RESTV2_ROUTING_TEST_RECIPIENT:-null@hosted.mailcow.de}
+      - RESTV2_ROUTING_TEST_STEP_TIMEOUT=${RESTV2_ROUTING_TEST_STEP_TIMEOUT:-15}
+      - RESTV2_ROUTING_TEST_TOTAL_TIMEOUT=${RESTV2_ROUTING_TEST_TOTAL_TIMEOUT:-60}
+      - IMAP_PORT=${IMAP_PORT:-143}
+      - IMAPS_PORT=${IMAPS_PORT:-993}
+      - POP_PORT=${POP_PORT:-110}
+      - POPS_PORT=${POPS_PORT:-995}
+      - SMTPS_PORT=${SMTPS_PORT:-465}
+      - SUBMISSION_PORT=${SUBMISSION_PORT:-587}
+      - SIEVE_PORT=${SIEVE_PORT:-4190}
+      - RESTV2_SHOW_DKIM_PRIV_KEYS=${RESTV2_SHOW_DKIM_PRIV_KEYS:-}
+      - RESTV2_AUTODISCOVER_CONFIG=${RESTV2_AUTODISCOVER_CONFIG:-}
+      - RESTV2_SESSION_LIFETIME=${RESTV2_SESSION_LIFETIME:-}
+      - RESTV2_DEFAULT_LANG=${RESTV2_DEFAULT_LANG:-}
+      - RESTV2_AVAILABLE_LANGUAGES=${RESTV2_AVAILABLE_LANGUAGES:-}
+      - RESTV2_FIDO2_UV_FLAG_REGISTER=${RESTV2_FIDO2_UV_FLAG_REGISTER:-}
+      - RESTV2_FIDO2_UV_FLAG_LOGIN=${RESTV2_FIDO2_UV_FLAG_LOGIN:-}
+      - RESTV2_FIDO2_USER_PRESENT_FLAG=${RESTV2_FIDO2_USER_PRESENT_FLAG:-}
+      - RESTV2_FIDO2_FORMATS=${RESTV2_FIDO2_FORMATS:-}
+      - RESTV2_WEBAUTHN_UV_FLAG_LOGIN=${RESTV2_WEBAUTHN_UV_FLAG_LOGIN:-}
+      - RESTV2_WEBAUTHN_USER_PRESENT_FLAG=${RESTV2_WEBAUTHN_USER_PRESENT_FLAG:-}
+      - RESTV2_OTP_LABEL=${RESTV2_OTP_LABEL:-}
+      - RESTV2_MAILCOW_APPS=${RESTV2_MAILCOW_APPS:-}
+      - RESTV2_TAGGING_LIMIT=${RESTV2_TAGGING_LIMIT:-}
+      - RESTV2_DOCKER_TIMEOUT=${RESTV2_DOCKER_TIMEOUT:-}
+      - RESTV2_SHOW_LAST_LOGIN=${RESTV2_SHOW_LAST_LOGIN:-}
+      - RESTV2_MAILBOX_DEFAULT_ATTRIBUTES=${RESTV2_MAILBOX_DEFAULT_ATTRIBUTES:-}
+      - RESTV2_ALIAS_DISABLE_EXTERNAL_DOMAINS=${RESTV2_ALIAS_DISABLE_EXTERNAL_DOMAINS:-}
+      - RESTV2_IMAPSYNC_OPTIONS=${RESTV2_IMAPSYNC_OPTIONS:-}
+      - RESTV2_SYNC_JOBS_CUSTOM_PARAMS_ADMIN_ONLY=${RESTV2_SYNC_JOBS_CUSTOM_PARAMS_ADMIN_ONLY:-n}
+      - RESTV2_SYNC_JOBS_BULK_LIMIT=${RESTV2_SYNC_JOBS_BULK_LIMIT:-100}
+      - RESTV2_ACCESS_TOKEN_LIFETIME=${RESTV2_ACCESS_TOKEN_LIFETIME:-}
+      - RESTV2_REFRESH_TOKEN_LIFETIME=${RESTV2_REFRESH_TOKEN_LIFETIME:-}
+      - RESTV2_PW_RESET_TOKEN_LIFETIME=${RESTV2_PW_RESET_TOKEN_LIFETIME:-}
+      - RESTV2_PW_RESET_TOKEN_LIMIT=${RESTV2_PW_RESET_TOKEN_LIMIT:-}
+      - RESTV2_WEBAUTHN_UV_FLAG_REGISTER=${RESTV2_WEBAUTHN_UV_FLAG_REGISTER:-}
+      - RESTV2_SESSION_NAME=${RESTV2_SESSION_NAME:-}
+      - RESTV2_SESSION_SAMESITE_POLICY=${RESTV2_SESSION_SAMESITE_POLICY:-}
+      - RESTV2_PW_RESET_PAGE=${RESTV2_PW_RESET_PAGE:-}
+      - RESTV2_PW_RESET_MAX_ATTEMPTS=${RESTV2_PW_RESET_MAX_ATTEMPTS:-10}
+      - RESTV2_PW_RESET_WINDOW=${RESTV2_PW_RESET_WINDOW:-900}
+      - RESTV2_MAILCOW_TPLS_DIR=${RESTV2_MAILCOW_TPLS_DIR:-/mailcow/tpls}
+      - RESTV2_SMTP_HOST=${RESTV2_SMTP_HOST:-postfix-mailcow}
+      - RESTV2_SMTP_PORT=${RESTV2_SMTP_PORT:-25}
+      - RESTV2_TOTP_ENROLMENT_TTL=${RESTV2_TOTP_ENROLMENT_TTL:-600}
+      - RESTV2_TOTP_ENROLMENT_MAX_ATTEMPTS=${RESTV2_TOTP_ENROLMENT_MAX_ATTEMPTS:-5}
+      - RESTV2_COUNTRY_LOOKUP=${RESTV2_COUNTRY_LOOKUP:-true}
+      - RESTV2_COUNTRY_LOOKUP_URL=${RESTV2_COUNTRY_LOOKUP_URL:-https://dfdata.bella.network/country/}
+      - RESTV2_COUNTRY_LOOKUP_BUDGET_MS=${RESTV2_COUNTRY_LOOKUP_BUDGET_MS:-1500}
+      - RESTV2_PUSHOVER_VALIDATE_URL=${RESTV2_PUSHOVER_VALIDATE_URL:-https://api.pushover.net/1/users/validate.json}
+      - DEMO_MODE=${DEMO_MODE:-n}
+      - RESTV2_LICENSE_VERIFICATION=${RESTV2_LICENSE_VERIFICATION:-true}
+      - RESTV2_MASS_MAIL_RATE=${RESTV2_MASS_MAIL_RATE:-10}
+      - RESTV2_LOGO_LIMITS=${RESTV2_LOGO_LIMITS:-}
+      - RESTV2_RSPAMD_MAPS=${RESTV2_RSPAMD_MAPS:-}
+    volumes:
+      - ./data/web/inc:/mailcow/web/inc:ro,z
+      - rspamd-vol-1:/var/lib/rspamd:ro
+      - ./data/assets/templates:/mailcow/tpls:ro,z
+      - ./data/conf/rspamd/custom:/mailcow/rspamd_custom_maps:z
+      - ./data/conf/dovecot/global_sieve_before:/mailcow/global_sieve/before:z
+      - ./data/conf/dovecot/global_sieve_after:/mailcow/global_sieve/after:z
+      - ./data/web/lang:/mailcow/web/lang:ro,z
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.restv2_audit_purge.schedule: "@daily"
+      ofelia.job-exec.restv2_audit_purge.command: "php /app/artisan restv2:audit-purge"
+      ofelia.job-exec.restv2_webmail_handoff_sweep.schedule: "@every 1m"
+      ofelia.job-exec.restv2_webmail_handoff_sweep.command: "php /app/artisan restv2:webmail-handoffs:sweep"
+      ofelia.job-exec.restv2_mass_mail.schedule: "@every 10s"
+      ofelia.job-exec.restv2_mass_mail.no-overlap: "true"
+      ofelia.job-exec.restv2_mass_mail.command: "php /app/artisan restv2:mass-mail-run --max-time=290"
+      ofelia.job-exec.restv2_mass_mail_purge.schedule: "@daily"
+      ofelia.job-exec.restv2_mass_mail_purge.command: "php /app/artisan restv2:mass-mail-purge"
+    healthcheck:
+      test: ["CMD", "php", "/app/artisan", "restv2:health", "--ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      mailcow-network:
+        aliases:
+          - restv2
+  ng-mailcow:
+    image: "@UI_IMAGE@"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    restart: always
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:8080/ng/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      mailcow-network:
+        aliases:
+          - ng-mailcow

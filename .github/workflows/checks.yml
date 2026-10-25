@@ -1,0 +1,32 @@
+name: Installation checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check Compose version
+        run: docker compose version
+      - name: Test installer safety and real Compose integration
+        run: python3 -m unittest discover -s tests -v
+      - name: Install Ansible for syntax validation
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install 'ansible-core==2.19.3'
+      - name: Validate playbook and inventory
+        run: .venv/bin/ansible-playbook -i ansible/inventory.example.yml ansible/install.yml --syntax-check
+      - name: Check the offline showcase is current
+        run: |
+          python3 scripts/package-showcase.py
+          git diff --exit-code --quiet -- docs/mailcow-modern-ui-showcase.html

@@ -1,0 +1,74 @@
+# mailcow REST API v2 and mailcowui-ng routing for nginx-mailcow (research R23).
+#
+# Copy this file to mailcow's data/conf/nginx/site.restv2.custom. mailcow's sites-default.conf.j2
+# includes /etc/nginx/conf.d/site.*.custom inside every server block, so no upstream file is
+# patched. The `^~` prefix matches win over mailcow's regex locations; /api/v1 is untouched.
+#
+# Upstreams are resolved at request time through Docker's DNS (resolver plus a variable), so
+# nginx starts even when a container is absent: /api/v2/ or /ng/ then answers 502.
+#
+# The dev stack (compose.yaml) uses this file unchanged: its `app` service has the network alias
+# `restv2-mailcow` and the same /app path.
+
+location ^~ /api/v2/ {
+    resolver 127.0.0.11 valid=30s;
+    set $restv2_upstream restv2-mailcow:9000;
+    include /etc/nginx/fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME /app/public/index.php;
+    fastcgi_param SCRIPT_NAME /index.php;
+    # httpoxy mitigation: never pass a client "Proxy" header on as HTTP_PROXY.
+    fastcgi_param HTTP_PROXY "";
+    # Two domain footer texts of 1 MiB each, with JSON escaping (feature 002 research D21); feature
+    # 013's templates, rules, maps, scripts and mass mail bodies (1 MiB each, two per request).
+    client_max_body_size 5m;
+    # A mailbox rename or a bulk deletion makes several container calls of up to DOCKER_TIMEOUT
+    # (60 s) each; the API finishes them even when the client goes away (feature 003 R26). It also
+    # covers feature 011's container and queue actions (DOCKER_TIMEOUT plus retries, R28), and a
+    # relayhost or transport connection test of up to 60 s (feature 009 R13), and a quarantine bulk
+    # release of 100 items with a mail server and a spam filter call of up to 30 s each (feature
+    # 006 R18).
+    fastcgi_read_timeout 900s;
+    fastcgi_pass $restv2_upstream;
+
+    # Feature 013 (research R3): logos are uploaded as raw bodies of up to 15 MiB (legacy
+    # $LOGO_LIMITS); raise this limit too when the operator raises max_size.
+    # The rewrite module's `set` runs only in the matched location, so it is repeated here.
+    location ^~ /api/v2/settings/logos/ {
+        set $restv2_upstream restv2-mailcow:9000;
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /app/public/index.php;
+        fastcgi_param SCRIPT_NAME /index.php;
+        fastcgi_param HTTP_PROXY "";
+        client_max_body_size 16m;
+        fastcgi_read_timeout 900s;
+        fastcgi_pass $restv2_upstream;
+    }
+}
+
+# The web app lives under /ng/; /ng without the slash redirects there. A relative Location keeps
+# whatever host and port the client used.
+location = /ng {
+    absolute_redirect off;
+    return 301 /ng/$is_args$args;
+}
+
+# proxy_pass with a variable and no URI part passes the original request path (/ng/...) and query
+# through to the mailcowui-ng container unchanged.
+location ^~ /ng/ {
+    resolver 127.0.0.11 valid=30s;
+    set $ng_upstream http://ng-mailcow:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass $ng_upstream;
+
+    # Credentials may arrive in a callback/query URL. The inner UI container's log settings
+    # cannot redact this outer proxy's access log. Match Vue's case-insensitive, optional-slash routes.
+    location ~* ^/ng/(?:reset-password|sso/return)/?$ {
+        set $ng_upstream http://ng-mailcow:8080;
+        proxy_pass $ng_upstream;
+        access_log off;
+        # Upstream errors include the original request URI and cannot redact its credentials.
+        error_log /dev/null;
+    }
+}

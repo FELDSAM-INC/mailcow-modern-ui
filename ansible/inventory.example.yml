@@ -1,0 +1,12 @@
+---
+all:
+  children:
+    mailcow:
+      hosts:
+        mail.example.org:
+          ansible_user: root
+          mailcow_dir: /opt/mailcow-dockerized
+          mailcow_url: https://mail.example.org
+          # Pin image digests for repeatable deployments (optional):
+          # modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:...
+          # modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng@sha256:...
