@@ -10,6 +10,7 @@ import urllib.request
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1]
+PREVIEW_VERSION = r"0\.\d+\.\d+-preview\.[1-9]\d*"
 MEDIA_TYPES = ", ".join([
     "application/vnd.oci.image.index.v1+json",
     "application/vnd.oci.image.manifest.v1+json",
@@ -35,7 +36,7 @@ def read(url, headers=None):
         return response.read()
 
 
-def verify_image(repository, reference, revision, fetch=read):
+def verify_image(repository, reference, revision, fetch=read, *, version=None):
     prefix = f"ghcr.io/feldsam-inc/{repository}@sha256:"
     if not reference.startswith(prefix) or not re.fullmatch(
         r"[0-9a-f]{64}", reference[len(prefix):]
@@ -43,6 +44,8 @@ def verify_image(repository, reference, revision, fetch=read):
         raise ValueError(f"{repository}: expected a fixed GHCR SHA-256 digest")
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError(f"{repository}: expected a full source revision")
+    if version is not None and not re.fullmatch(PREVIEW_VERSION, version):
+        raise ValueError(f"{repository}: expected a community preview version")
     token_url = f"https://ghcr.io/token?scope=repository:feldsam-inc/{repository}:pull"
     token = json.loads(fetch(token_url))["token"]
     headers = {"Authorization": "Bearer " + token, "Accept": MEDIA_TYPES}
@@ -55,6 +58,10 @@ def verify_image(repository, reference, revision, fetch=read):
         return json.loads(raw)
 
     index = content("manifests", reference.split("@", 1)[1])
+    if version is not None:
+        tagged = fetch(f"{registry}/manifests/{version}", headers)
+        if "sha256:" + hashlib.sha256(tagged).hexdigest() != reference.split("@", 1)[1]:
+            raise ValueError(f"{repository}: release tag points to a different image")
     platforms = set()
     for descriptor in index["manifests"]:
         platform = descriptor.get("platform", {})
@@ -81,7 +88,7 @@ def main():
     release = json.loads((SOURCE / "deploy/release.json").read_text())
     version = release["version"]
     if (
-        not re.fullmatch(r"0\.\d+\.\d+-preview\.[1-9]\d*", version)
+        not re.fullmatch(PREVIEW_VERSION, version)
         or release["prerelease"] is not True
     ):
         raise ValueError("Expected an explicitly marked community preview version")
@@ -91,8 +98,8 @@ def main():
         raise ValueError("Release notes are missing")
     for component, repository in [("api", "mailcow-rest-v2"), ("ui", "mailcowui-ng")]:
         image = release["images"][component]
-        verify_image(repository, image["image"], image["revision"])
-        print(f"{component}: public AMD64 and ARM64 digests and source revision verified")
+        verify_image(repository, image["image"], image["revision"], version=version)
+        print(f"{component}: release tag, public AMD64 and ARM64 digests and source revision verified")
 
 
 if __name__ == "__main__":

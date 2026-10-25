@@ -3,8 +3,8 @@
 A modern web interface for mailcow, with compact desktop tables, mobile layouts,
 light and dark themes, and a shared design across administration and account settings.
 
-**[Community Preview 1 — v0.1.0-preview.1](https://github.com/FELDSAM-INC/mailcow-modern-ui/releases/tag/v0.1.0-preview.1)**
-is the first public prerelease. See its [release notes](docs/releases/0.1.0-preview.1.md)
+**[Community Preview 2 — v0.1.0-preview.2](https://github.com/FELDSAM-INC/mailcow-modern-ui/releases/tag/v0.1.0-preview.2)**
+is the current community prerelease. See its [release notes](docs/releases/0.1.0-preview.2.md)
 for the fixed component builds, requirements, and validation scope.
 
 **[Install manually](docs/installation.md) · [Install with Ansible](docs/ansible.md) ·
@@ -60,8 +60,10 @@ custom overrides, and stores the application key privately. The API creates its 
 `restv2_` tables; it does not migrate mailcow's tables.
 
 Both installers default to the fixed UI/API image digests in
-[deploy/release.json](deploy/release.json). The component `latest` tags remain a moving
-development channel and require an explicit image override.
+[deploy/release.json](deploy/release.json). Both images also have the version tag
+`0.1.0-preview.2`, matching the `v0.1.0-preview.2` Git release without its `v` prefix.
+The component `latest` tags remain a moving development channel and require an explicit
+image override.
 
 ## Projects and images
 

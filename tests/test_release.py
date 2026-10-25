@@ -2,6 +2,7 @@ import hashlib
 import importlib.util
 import json
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -15,6 +16,7 @@ spec.loader.exec_module(release)
 class ReleaseImagesTests(unittest.TestCase):
     revision = "a" * 40
     repository = "mailcowui-ng"
+    version = "0.1.0-preview.2"
 
     def registry(self, architectures=("amd64", "arm64"), revision=None):
         base = "https://ghcr.io/v2/feldsam-inc/mailcowui-ng"
@@ -39,6 +41,7 @@ class ReleaseImagesTests(unittest.TestCase):
                 "digest": manifest, "platform": {"os": "linux", "architecture": arch},
             })
         digest = store("manifests", {"manifests": manifests})
+        resources[f"{base}/manifests/{self.version}"] = resources[f"{base}/manifests/{digest}"]
 
         def fetch(url, headers=None):
             if url.startswith("https://ghcr.io/token?"):
@@ -51,6 +54,44 @@ class ReleaseImagesTests(unittest.TestCase):
     def test_accepts_public_images_for_both_architectures_at_the_recorded_revision(self):
         reference, fetch = self.registry()
         release.verify_image(self.repository, reference, self.revision, fetch)
+
+    def test_accepts_a_release_tag_pointing_to_the_fixed_image(self):
+        reference, fetch = self.registry()
+        release.verify_image(
+            self.repository, reference, self.revision, fetch, version=self.version
+        )
+
+    def test_rejects_a_release_tag_pointing_to_another_image(self):
+        reference, fetch = self.registry()
+        _, other = self.registry(revision="b" * 40)
+
+        def wrong_tag(url, headers=None):
+            return (other if url.endswith("/manifests/" + self.version) else fetch)(url, headers)
+
+        with self.assertRaisesRegex(ValueError, "release tag points to a different image"):
+            release.verify_image(
+                self.repository, reference, self.revision, wrong_tag, version=self.version
+            )
+
+    def test_rejects_a_release_tag_that_is_not_published(self):
+        reference, fetch = self.registry()
+
+        def missing_tag(url, headers=None):
+            if url.endswith("/manifests/" + self.version):
+                raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+            return fetch(url, headers)
+
+        with self.assertRaises(urllib.error.HTTPError):
+            release.verify_image(
+                self.repository, reference, self.revision, missing_tag, version=self.version
+            )
+
+    def test_rejects_an_invalid_version_before_contacting_the_registry(self):
+        with self.assertRaisesRegex(ValueError, "expected a community preview version"):
+            release.verify_image(
+                self.repository, "ghcr.io/feldsam-inc/mailcowui-ng@sha256:" + "c" * 64,
+                self.revision, version="latest",
+            )
 
     def test_rejects_a_missing_architecture(self):
         reference, fetch = self.registry(architectures=("amd64",))

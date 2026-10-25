@@ -14,7 +14,7 @@ must already be running. Keep your usual mailcow backup before installing an add
 ## 1. Download
 
 ```bash
-git clone --branch v0.1.0-preview.1 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
+git clone --branch v0.1.0-preview.2 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
 ```
 
 ## 2. Set your mailcow directory
@@ -34,6 +34,8 @@ python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILC
 
 The default image pair is pinned in [this preview's release manifest](../deploy/release.json).
 Re-running these commands installs the same UI and API builds.
+The same builds are publicly available as `ghcr.io/feldsam-inc/mailcow-rest-v2:0.1.0-preview.2`
+and `ghcr.io/feldsam-inc/mailcowui-ng:0.1.0-preview.2`; the installer uses their fixed digests.
 
 This adds a managed `include` to `docker-compose.override.yml`, preserves other
 services and comments, generates the application key once, and validates Compose.

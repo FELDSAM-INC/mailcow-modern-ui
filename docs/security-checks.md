@@ -60,6 +60,10 @@ The temporary `scan-*` tag is a candidate, not a supported release. A failing sc
 release tags untouched. Weekly scans recheck the current `latest` image; pinned older previews must
 also be scanned before recommending them for continued use.
 
+Before publishing an installation bundle, `scripts/check-release.py` verifies anonymous registry
+access, both image architectures and their source revisions, and that each preview version tag
+resolves to the exact image digest recorded in `deploy/release.json`.
+
 ## Authenticated runtime testing
 
 In an API checkout with the UI checkout next to it:
