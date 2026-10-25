@@ -4,7 +4,7 @@ A modern web interface for mailcow, with compact desktop tables, mobile layouts,
 light and dark themes, and a shared design across administration and account settings.
 
 **[Install manually](docs/installation.md) · [Install with Ansible](docs/ansible.md) ·
-[Update or uninstall](docs/maintenance.md) · [Download the screenshot tour](https://github.com/FELDSAM-INC/mailcow-modern-ui/raw/refs/heads/main/docs/mailcow-modern-ui-showcase.html)**
+[Update or uninstall](docs/maintenance.md) · [View the screenshot tour](https://feldsam-inc.github.io/mailcow-modern-ui/)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/mailboxes-dark.jpg">
@@ -26,7 +26,9 @@ light and dark themes, and a shared design across administration and account set
 
 Screenshots use sample data, captured on **25 October 2026** from UI revision
 `3c0ea10d`. They illustrate that preview; newer builds may look different.
-The [full gallery](docs/index.html) includes both themes and an offline HTML download.
+The [full gallery](https://feldsam-inc.github.io/mailcow-modern-ui/) opens directly in your
+browser and includes both themes. Use its **Download this showcase** button for an
+offline `.html` copy.
 
 ## Installation
 
@@ -82,7 +84,7 @@ ansible-playbook -i ansible/inventory.example.yml ansible/install.yml --syntax-c
 ```
 
 The [gallery maintenance guide](docs/showcase.md) explains screenshot provenance,
-offline packaging, and optional GitHub Pages hosting.
+offline packaging, and GitHub Pages hosting.
 
 ## License
 

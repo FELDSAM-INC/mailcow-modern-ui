@@ -5,7 +5,8 @@ are local files in `screenshots/`, with capture dates, routes, and source revisi
 `screenshots/capture-manifest.json`. The current images use sample data from UI revision
 `3c0ea10d`, captured on 25 October 2026; they are not freshly captured on every release.
 
-Open `index.html` locally, or serve this directory using any static web server.
+Share the [GitHub Pages gallery](https://feldsam-inc.github.io/mailcow-modern-ui/).
+You can also open `index.html` locally or serve this directory using any static web server.
 The gallery has no analytics, external fonts, or third-party JavaScript.
 
 ## Offline download
@@ -20,15 +21,28 @@ Commit `docs/mailcow-modern-ui-showcase.html` alongside those changes. It embeds
 screenshots, CSS, and JavaScript, so the visual tour also works without internet access.
 Installation and source links still need a connection.
 
-## GitHub Pages (optional)
+## GitHub Pages
 
-In this repository's **Settings → Pages**, select **Deploy from a branch**, branch
-**main**, directory **/docs**. After GitHub finishes publishing, the URL will be:
+Enable publishing once in this repository's
+[Settings → Pages](https://github.com/FELDSAM-INC/mailcow-modern-ui/settings/pages):
+
+1. Under **Build and deployment**, select **Deploy from a branch**.
+2. Select branch **main** and directory **/docs**.
+3. Click **Save** and wait for GitHub's Pages deployment to finish.
+
+The public gallery URL is:
 
 `https://feldsam-inc.github.io/mailcow-modern-ui/`
 
-The repository README and offline download work without enabling Pages. This repository
-does not provision a Pages site or claim that the URL is already live.
+Future pushes to `main` publish this directory automatically. The `.nojekyll` file
+keeps the gallery as plain static HTML; no application build, deployment secret, or
+custom Actions workflow is needed. The URL returns 404 until Pages is enabled and its
+first deployment completes.
+
+Use the Pages URL when sharing the tour. GitHub's repository file viewer and raw-file
+URLs are for source/downloads and can show the HTML as text. The hosted gallery renders
+in the browser and its download buttons save the offline file as
+`mailcow-modern-ui-showcase.html` from the same site.
 
 ## Refresh screenshots
 
