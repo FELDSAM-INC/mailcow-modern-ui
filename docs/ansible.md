@@ -3,7 +3,8 @@
 Run Ansible on your workstation or automation host. It connects over SSH to an
 **existing, running mailcow server**. The server needs Python 3.9+, Docker Compose
 2.20.3+, mailcow **2026-09a or newer** (including **2026-10**), and a working HTTPS URL.
-Older mailcow releases are expected to work, but have not been tested yet.
+Older mailcow releases remain untested. `2026-09` shares the accepted schema; releases
+through `2026-07b` currently fail the API's schema check.
 See [compatibility and the database schema check](compatibility.md).
 
 The playbook uses only `ansible-core` built-in modules; no Galaxy collections or

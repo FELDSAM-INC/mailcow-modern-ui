@@ -3,8 +3,9 @@
 Run these commands on an **existing mailcow server**, as root or with `sudo`.
 Use one block at a time and stop if it fails.
 
-Use mailcow **2026-09a or newer**, including **2026-10**. Older releases are expected
-to work, but have not been tested yet; see [compatibility](compatibility.md).
+Use mailcow **2026-09a or newer**, including **2026-10**. Older releases remain untested:
+`2026-09` shares the accepted schema, while releases through `2026-07b` currently fail
+the API's schema check. See [compatibility and schema history](compatibility.md).
 
 You also need a working HTTPS certificate,
 Git, Python **3.9+**, and Docker Compose **2.20.3+**. Docker, mailcow, and its database

@@ -38,7 +38,8 @@ offline `.html` copy.
 
 Install on an **existing, running mailcow server** with HTTPS.
 Use **mailcow `2026-09a` or newer**, including **`2026-10`**.
-Older releases are expected to work, but have not been tested yet.
+Older releases remain untested: `2026-09` shares the accepted schema, while releases
+through `2026-07b` currently fail the API's schema check.
 See [compatibility and the database schema check](docs/compatibility.md).
 This is a community development preview, maintained independently of the mailcow project.
 
