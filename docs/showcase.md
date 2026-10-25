@@ -9,10 +9,11 @@ Share the [GitHub Pages gallery](https://feldsam-inc.github.io/mailcow-modern-ui
 You can also open `index.html` locally or serve this directory using any static web server.
 The gallery has no analytics, external fonts, or third-party JavaScript.
 It includes 28 screenshots (14 views in two themes), an Install menu for the manual and
-Ansible guides, and links to REST API v2. The colour control is a local preview: it changes
-the page accent and remembers the choice in this browser. It does not recolour screenshots
-or change a mail server. The page explains where administrators save real installation
-colours: **System configuration → Options → Customize**.
+Ansible guides, and links to REST API v2. The theme switcher stays fixed in the corner
+while scrolling. The page explains where administrators save installation colours:
+**System configuration → Options → Customize**. The Customize screenshots are captured
+after saving the palette, so navigation, tabs, and previews show the same primary colour.
+
 
 ## Offline download
 
@@ -56,3 +57,8 @@ Capture against the UI project's mock-data setup using its
 Copy the resulting images and manifest into this repository, review them for real personal
 data or credentials, update the visible capture date/revision in the README and gallery,
 and regenerate the offline download. Preserve sample data labels.
+
+For the Customize pair, start from the UI's `brand-colours-none` mock scenario. Open
+**System configuration → Options → Customize → Colours**, edit the palette to light
+`#1d4ed8` and dark `#60a5fa`, and save. Reload before capturing each theme and verify that
+the sidebar, selected tabs, and colour previews all use the saved palette.

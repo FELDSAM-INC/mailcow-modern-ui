@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-25T12:47:16.522Z",
+  "capturedAt": "2026-10-25T13:23:22.635Z",
   "sourceRevision": "3c0ea10d",
   "sampleData": true,
   "captures": [
@@ -8,196 +8,198 @@
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "domains-light.jpg",
       "route": "domains",
       "scenario": "domains-empty",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "sync-jobs-light.jpg",
       "route": "sync-jobs",
       "scenario": "sync-jobs-admin",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "queue-light.jpg",
       "route": "operations/mail-queue",
       "scenario": "ops-queue",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "system-light.jpg",
       "route": "operations/dashboard",
       "scenario": "admin-operations",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "mobile-mailboxes-light.jpg",
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "light",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "mobile-domains-light.jpg",
       "route": "domains",
       "scenario": "domains-empty",
       "theme": "light",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "mobile-menu-light.jpg",
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "light",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "mailboxes-dark.jpg",
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "domains-dark.jpg",
       "route": "domains",
       "scenario": "domains-empty",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "sync-jobs-dark.jpg",
       "route": "sync-jobs",
       "scenario": "sync-jobs-admin",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "queue-dark.jpg",
       "route": "operations/mail-queue",
       "scenario": "ops-queue",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "system-dark.jpg",
       "route": "operations/dashboard",
       "scenario": "admin-operations",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "mobile-mailboxes-dark.jpg",
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "dark",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "mobile-domains-dark.jpg",
       "route": "domains",
       "scenario": "domains-empty",
       "theme": "dark",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "mobile-menu-dark.jpg",
       "route": "mailboxes",
       "scenario": "admin-mailboxes-30",
       "theme": "dark",
-      "viewport": "390 × 844"
+      "viewport": "390 \u00d7 844"
     },
     {
       "file": "sign-in-light.jpg",
       "route": "sign-in",
       "scenario": "admin-password",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "account-overview-light.jpg",
       "route": "account/overview",
       "scenario": "account-mailbox",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "account-security-light.jpg",
       "route": "account/two-factor",
       "scenario": "account-mailbox",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "app-passwords-light.jpg",
       "route": "account/app-passwords",
       "scenario": "account-mailbox",
       "theme": "light",
-      "viewport": "1440 × 960"
-    },
-    {
-      "file": "customize-light.jpg",
-      "route": "system/customize/colours",
-      "scenario": "brand-colours-set",
-      "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "quarantine-light.jpg",
       "route": "quarantine",
       "scenario": "quarantine-admin",
       "theme": "light",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "sign-in-dark.jpg",
       "route": "sign-in",
       "scenario": "admin-password",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "account-overview-dark.jpg",
       "route": "account/overview",
       "scenario": "account-mailbox",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "account-security-dark.jpg",
       "route": "account/two-factor",
       "scenario": "account-mailbox",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "app-passwords-dark.jpg",
       "route": "account/app-passwords",
       "scenario": "account-mailbox",
       "theme": "dark",
-      "viewport": "1440 × 960"
-    },
-    {
-      "file": "customize-dark.jpg",
-      "route": "system/customize/colours",
-      "scenario": "brand-colours-set",
-      "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
     },
     {
       "file": "quarantine-dark.jpg",
       "route": "quarantine",
       "scenario": "quarantine-admin",
       "theme": "dark",
-      "viewport": "1440 × 960"
+      "viewport": "1440 \u00d7 960"
+    },
+    {
+      "file": "customize-light.jpg",
+      "route": "system/customize/colours",
+      "scenario": "brand-colours-none",
+      "theme": "light",
+      "viewport": "1440 \u00d7 960",
+      "preparation": "Saved light #1d4ed8 and dark #60a5fa through Customize, reloaded, and verified matching sidebar and tabs."
+    },
+    {
+      "file": "customize-dark.jpg",
+      "route": "system/customize/colours",
+      "scenario": "brand-colours-none",
+      "theme": "dark",
+      "viewport": "1440 \u00d7 960",
+      "preparation": "Saved light #1d4ed8 and dark #60a5fa through Customize, reloaded, and verified matching sidebar and tabs."
     }
   ]
 }

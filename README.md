@@ -17,7 +17,7 @@ light and dark themes, and a shared design across administration and account set
 - **Operations:** quarantine, queue management, containers, logs, and audit history.
 - **Account access:** administrator, domain administrator, and mailbox user views; password reset, two-factor authentication, and passkeys.
 - **Consistent controls:** search, filters, column selection, row actions, and expandable details.
-- **Your branding:** configurable logos and colours in **System configuration → Options → Customize**, with light and dark themes. [Try a colour in the tour](https://feldsam-inc.github.io/mailcow-modern-ui/#customize).
+- **Your branding:** configurable logos and colours in **System configuration → Options → Customize**, with light and dark themes. [See Customize in the tour](https://feldsam-inc.github.io/mailcow-modern-ui/#customize).
 
 <p>
   <img src="docs/screenshots/mobile-mailboxes-light.jpg" width="240" alt="Mailbox management on mobile">
