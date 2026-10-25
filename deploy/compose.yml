@@ -5,6 +5,8 @@ services:
     env_file: ./modern-ui/secrets.env
     restart: always
     read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     tmpfs:
       - /app/storage:uid=82,gid=82,mode=0755
       - /app/bootstrap/cache:uid=82,gid=82,mode=0755
@@ -178,6 +180,8 @@ services:
   ng-mailcow:
     image: "@UI_IMAGE@"
     read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     tmpfs:
       - /tmp
       - /var/cache/nginx

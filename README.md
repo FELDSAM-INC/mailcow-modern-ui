@@ -122,3 +122,7 @@ python3 scripts/test-nginx.py --ui-source ../mailcowui-ng --ui-dist ../mailcowui
 
 [GPL-3.0](LICENSE), consistent with the two application repositories.
 The interface uses TailAdmin Free; see [third-party notices](NOTICE.md).
+
+## Security checks
+
+See [automated security checks](docs/security-checks.md) for scanners, release gates, isolated runtime testing and repository settings.

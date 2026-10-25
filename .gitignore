@@ -4,3 +4,6 @@ __pycache__/
 ansible/inventory.yml
 ansible/*.retry
 .DS_Store
+
+# Local security reports may include source and vulnerability details.
+/security-reports/

@@ -1,0 +1,7 @@
+node_modules/
+vendor/
+.git/
+security-reports/
+.smoke/
+src/api/generated/
+src/i18n/snapshot/

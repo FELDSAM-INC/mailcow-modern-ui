@@ -1,0 +1,10 @@
+title = "mailcow security checks"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "mailcow-api-key"
+description = "mailcow REST v2 API key"
+regex = '''mcv2_[A-Za-z0-9]{40}\b'''
+keywords = ["mcv2_"]

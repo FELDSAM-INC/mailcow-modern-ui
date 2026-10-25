@@ -1,0 +1,6 @@
+# Reviewed 2026-10-25: exact historical test fixtures and public metadata only.
+# New secrets, even in the same file, must still fail.
+# deploy/sources.json — source revision hash
+0714b4fd29300b1b552c307286559a2dd219c24d:deploy/sources.json:generic-api-key:2
+# deploy/sources.json — source revision hash
+e0799ada7aac52e36562f54ebf620a33f6bf79a5:deploy/sources.json:generic-api-key:2

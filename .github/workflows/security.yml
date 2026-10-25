@@ -1,0 +1,37 @@
+name: Security checks
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [secrets, source, config]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test scanner failure and reporting behavior
+        run: python3 -m unittest discover -s scripts/security -p "*_test.py"
+      - name: Run pinned local scanners
+        run: python3 scripts/security/check.py "${{ matrix.check }}"
+      - name: Retain reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: security-${{ matrix.check }}
+          path: security-reports/
+          retention-days: 7
+          if-no-files-found: ignore

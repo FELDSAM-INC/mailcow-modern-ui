@@ -1,0 +1,4 @@
+# Exceptions require an exact ID, affected path/package, reason and expiration.
+# No accepted vulnerabilities or misconfigurations.
+vulnerabilities: []
+misconfigurations: []

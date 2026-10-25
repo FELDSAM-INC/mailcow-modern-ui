@@ -105,6 +105,19 @@ COMPOSE_PROJECT_NAME=modern-ui-test
         self.assertFalse((self.root / "modern-ui").exists())
         self.assertFalse((self.root / "docker-compose.override.yml").exists())
 
+    def test_addon_containers_run_with_restricted_privileges(self):
+        self.configure()
+        model = json.loads(manage.compose(self.root, "config", "--format", "json"))
+        for name in ["restv2-mailcow", "ng-mailcow"]:
+            service = model["services"][name]
+            self.assertTrue(service["read_only"])
+            self.assertEqual(service["cap_drop"], ["ALL"])
+            self.assertIn("no-new-privileges:true", service["security_opt"])
+            self.assertFalse(service.get("privileged", False))
+            self.assertFalse(service.get("ports"))
+            self.assertFalse(any("docker.sock" in volume.get("source", "")
+                                 for volume in service.get("volumes", [])))
+
     def test_compose_paths_secrets_and_service_isolation(self):
         self.assertTrue(self.configure())
         model = json.loads(manage.compose(self.root, "config", "--format", "json"))
