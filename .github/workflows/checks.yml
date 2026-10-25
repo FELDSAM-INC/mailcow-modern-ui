@@ -3,6 +3,7 @@ name: Installation checks
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
 
 permissions:
@@ -34,3 +35,34 @@ jobs:
         run: |
           python3 scripts/package-showcase.py
           git diff --exit-code --quiet -- docs/mailcow-modern-ui-showcase.html
+
+  release:
+    name: Publish community preview
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify the release tag and public images
+        run: python3 scripts/check-release.py --tag "$GITHUB_REF_NAME"
+      - name: Prepare release assets
+        run: |
+          mkdir release-assets
+          cp deploy/release.json docs/mailcow-modern-ui-showcase.html release-assets/
+          cd release-assets
+          sha256sum release.json mailcow-modern-ui-showcase.html > SHA256SUMS
+      - name: Publish the GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          title="$(python3 -c 'import json; print(json.load(open("deploy/release.json"))["name"])')"
+          gh release create "$GITHUB_REF_NAME" release-assets/* \
+            --verify-tag --title "mailcow Modern UI — $title" \
+            --notes-file "docs/releases/$version.md" --prerelease --latest=false

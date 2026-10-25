@@ -412,12 +412,12 @@ def main():
     parser.add_argument(
         "--api-image",
         type=image_reference,
-        default="ghcr.io/feldsam-inc/mailcow-rest-v2:latest",
+        help="Override the API image pinned in deploy/release.json",
     )
     parser.add_argument(
         "--ui-image",
         type=image_reference,
-        default="ghcr.io/feldsam-inc/mailcowui-ng:latest",
+        help="Override the UI image pinned in deploy/release.json",
     )
     args = parser.parse_args()
     if args.ui_path is not None and args.action != "activate":
@@ -425,6 +425,17 @@ def main():
     root = args.mailcow_dir.resolve()
     try:
         if args.action == "configure":
+            if args.api_image is None or args.ui_image is None:
+                try:
+                    release = json.loads((SOURCE / "deploy/release.json").read_text())
+                    api_image = image_reference(release["images"]["api"]["image"])
+                    ui_image = image_reference(release["images"]["ui"]["image"])
+                except (OSError, ValueError, KeyError, TypeError, argparse.ArgumentTypeError):
+                    raise InstallError(
+                        "Invalid or missing release manifest: deploy/release.json"
+                    ) from None
+                args.api_image = args.api_image or api_image
+                args.ui_image = args.ui_image or ui_image
             changed = configure(root, args.api_image, args.ui_image)
         elif args.action == "detach":
             changed = detach(root)

@@ -6,12 +6,13 @@
   serial: 1
   vars:
     modern_ui_source: "{{ playbook_dir }}/.."
+    modern_ui_release: "{{ lookup('ansible.builtin.file', modern_ui_source ~ '/deploy/release.json') | from_json }}"
   tasks:
     - name: Apply defaults without overriding inventory settings
       ansible.builtin.set_fact:
         modern_ui_tools_dir: "{{ modern_ui_tools_dir | default('/opt/mailcow-modern-ui') }}"
-        modern_ui_api_image: "{{ modern_ui_api_image | default('ghcr.io/feldsam-inc/mailcow-rest-v2:latest') }}"
-        modern_ui_web_image: "{{ modern_ui_web_image | default('ghcr.io/feldsam-inc/mailcowui-ng:latest') }}"
+        modern_ui_api_image: "{{ modern_ui_api_image | default(modern_ui_release.images.api.image) }}"
+        modern_ui_web_image: "{{ modern_ui_web_image | default(modern_ui_release.images.ui.image) }}"
         modern_ui_pull: "{{ modern_ui_pull | default(true) }}"
         modern_ui_path: "{{ modern_ui_path | default('/ng/') }}"
 
@@ -53,6 +54,7 @@
         - deploy/nginx/site.modern-ui-root.custom
         - deploy/nginx/modern-ui-root-proxy.custom
         - deploy/sources.json
+        - deploy/release.json
 
     - name: Configure the addon and preserve its existing application key
       ansible.builtin.command:

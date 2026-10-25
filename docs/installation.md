@@ -10,7 +10,7 @@ must already be running. Keep your usual mailcow backup before installing an add
 ## 1. Download
 
 ```bash
-git clone https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
+git clone --branch v0.1.0-preview.1 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
 ```
 
 ## 2. Set your mailcow directory
@@ -27,6 +27,9 @@ MAILCOW_DIR=/opt/mailcow-dockerized
 ```bash
 python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILCOW_DIR"
 ```
+
+The default image pair is pinned in [this preview's release manifest](../deploy/release.json).
+Re-running these commands installs the same UI and API builds.
 
 This adds a managed `include` to `docker-compose.override.yml`, preserves other
 services and comments, generates the application key once, and validates Compose.
@@ -123,9 +126,10 @@ python3 /opt/mailcow-modern-ui/scripts/manage.py activate --mailcow-dir "$MAILCO
 
 Both switches test and reload nginx, with automatic restoration if activation fails.
 
-## Fixed image versions
+## Image overrides and the development channel
 
-Use `--api-image` and `--ui-image` with explicit tags or digests in step 3:
+The preview already uses fixed image digests. To select another compatible pair,
+use `--api-image` and `--ui-image` in step 3:
 
 ```bash
 python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILCOW_DIR" --api-image ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:API_DIGEST --ui-image ghcr.io/feldsam-inc/mailcowui-ng@sha256:UI_DIGEST
@@ -135,7 +139,12 @@ Replace the digest placeholders with real published values from the
 [API package](https://github.com/orgs/FELDSAM-INC/packages/container/package/mailcow-rest-v2)
 and [UI package](https://github.com/orgs/FELDSAM-INC/packages/container/package/mailcowui-ng).
 Record both values and use them again when reconfiguring. Image settings are stored in
-`modern-ui/compose.yml`; rerunning `configure` without image arguments selects `latest`.
+`modern-ui/compose.yml`; rerunning `configure` without image arguments selects the pair
+from the checked-out release manifest.
+
+To explicitly follow successful development builds, pass
+`--api-image ghcr.io/feldsam-inc/mailcow-rest-v2:latest` and
+`--ui-image ghcr.io/feldsam-inc/mailcowui-ng:latest` to `configure` instead.
 
 ## Existing installations and custom Compose layouts
 

@@ -11,7 +11,7 @@ The target Python version must also be supported by that Ansible release.
 ## 1. Download
 
 ```bash
-git clone https://github.com/FELDSAM-INC/mailcow-modern-ui.git
+git clone --branch v0.1.0-preview.1 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git
 ```
 
 ```bash
@@ -55,8 +55,22 @@ It uses the same configuration helper and template as manual installation.
 
 ## Updates and pinned versions
 
-Pull this repository's updates and run the same playbook again. The application key is
-retained. Unchanged container/configuration state does not trigger an nginx reload or
+Check out the desired release tag on the controller and run the same playbook again.
+The default images are the fixed pair in [deploy/release.json](../deploy/release.json).
+From the controller's `mailcow-modern-ui` directory, fetch the release tags:
+
+```bash
+git fetch --tags origin
+```
+
+Select the desired release (replace this tag when a newer release is available):
+
+```bash
+git checkout v0.1.0-preview.1
+```
+
+Then rerun the install command with the same inventory. The application key is retained.
+Unchanged container/configuration state does not trigger an nginx reload or
 Ofelia restart. Pulling checks for a newer image; a new image can recreate its service.
 
 | Inventory variable | Default | Purpose |
@@ -64,12 +78,16 @@ Ofelia restart. Pulling checks for a newer image; a new image can recreate its s
 | `mailcow_dir` | Required | Existing mailcow directory |
 | `mailcow_url` | Required | Public HTTPS origin |
 | `modern_ui_path` | `/ng/` | Browser URL path: `/ng/` or `/` |
-| `modern_ui_api_image` | `ghcr.io/feldsam-inc/mailcow-rest-v2:latest` | API image tag or digest |
-| `modern_ui_web_image` | `ghcr.io/feldsam-inc/mailcowui-ng:latest` | UI image tag or digest |
+| `modern_ui_api_image` | Release manifest API digest | Override the API image tag or digest |
+| `modern_ui_web_image` | Release manifest UI digest | Override the UI image tag or digest |
 | `modern_ui_tools_dir` | `/opt/mailcow-modern-ui` | Remote deployment helper directory |
 | `modern_ui_pull` | `true` | Pull images before starting; set false for already loaded images |
 
-Use fixed digests for repeatable deployments. This playbook follows the same
+Release defaults already use fixed digests. Explicit inventory image settings override
+them; remove those settings to follow the selected release's image pair. The `:latest`
+tags select the moving development channel.
+
+This playbook follows the same
 [existing-installation restrictions](installation.md#existing-installations-and-custom-compose-layouts)
 as the manual helper. It does not install or upgrade mailcow itself.
 

@@ -32,18 +32,27 @@ docker image inspect --format '{{json .RepoDigests}}' "$(docker inspect --format
 
 ## Update
 
-For an Ansible installation, update this repository on the controller and rerun the
-playbook with the same inventory. For a manual installation:
+For an Ansible installation, fetch tags and check out the desired release in the
+controller's repository, then rerun the playbook with the same inventory. Remove any
+image overrides from the inventory to use that release's default image pair.
+For a manual installation, fetch the release tags:
 
 ```bash
-git -C /opt/mailcow-modern-ui pull --ff-only
+git -C /opt/mailcow-modern-ui fetch --tags origin
+```
+
+Select the release to install (replace the tag below when a newer release is available):
+
+```bash
+git -C /opt/mailcow-modern-ui checkout v0.1.0-preview.1
 ```
 
 ```bash
 python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILCOW_DIR"
 ```
 
-That command selects `latest`. If you pinned images, pass the intended `--api-image`
+That command selects the image digests from the checked-out release's
+`deploy/release.json`. If you use custom images, pass the intended `--api-image`
 and `--ui-image` values again. The existing application key is preserved.
 
 ```bash

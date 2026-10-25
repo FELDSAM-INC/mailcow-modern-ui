@@ -132,7 +132,13 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             "ANSIBLE_NOCOLOR": "1",
         }
         expected_restarts = 0
-        for attempt, path in enumerate(["/", "/", "/ng/", "/ng/", "/ng/", "/ng/"], 1):
+        release = json.loads((REPO / "deploy/release.json").read_text())
+        original_key = None
+        paths = ["/", "/", "/ng/", "/ng/", "/ng/", "/ng/", "/ng/", "/ng/"]
+        for attempt, path in enumerate(paths, 1):
+            if attempt == 7:
+                del options["modern_ui_api_image"]
+                del options["modern_ui_web_image"]
             if attempt in (4, 5):
                 # A newer image under the same tag changes no installer files.
                 (root / "replace-image").write_text("stderr" if attempt == 4 else "stdout")
@@ -151,7 +157,7 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             if result.returncode:
                 raise AssertionError(result.stdout + result.stderr)
             recap = next(line for line in result.stdout.splitlines() if "unreachable=" in line)
-            if attempt in (2, 6):
+            if attempt in (2, 6, 8):
                 assert re.search(r"changed=0\b", recap), recap
             else:
                 expected_restarts += 1
@@ -163,17 +169,29 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
             )
             assert (root / "modern-ui/ui-path").read_text().strip() == path
             assert (root / "data/conf/nginx/site.modern-ui-root.custom").exists() == (path == "/")
+            model = json.loads(fixture.manage.compose(root, "config", "--format", "json"))
+            for component, service, option in [
+                ("api", "restv2-mailcow", "modern_ui_api_image"),
+                ("ui", "ng-mailcow", "modern_ui_web_image"),
+            ]:
+                assert model["services"][service]["image"] == options.get(
+                    option, release["images"][component]["image"]
+                )
+            key_value = (root / "modern-ui/secrets.env").read_bytes()
+            if original_key is None:
+                original_key = key_value
+            assert key_value == original_key, (
+                "Changing image selection must retain the application key"
+            )
             print(f"Pass {attempt} ({path}): {recap.strip()}")
         assert (root / "tools/scripts/manage.py").is_file()
-        model = json.loads(fixture.manage.compose(root, "config", "--format", "json"))
-        assert model["services"]["restv2-mailcow"]["image"] == options["modern_ui_api_image"]
-        assert model["services"]["ng-mailcow"]["image"] == options["modern_ui_web_image"]
+        assert json.loads((root / "tools/deploy/release.json").read_text()) == release
         commands = [json.loads(line) for line in (root / "commands.jsonl").read_text().splitlines()]
         assert not any("pull" in command for command in commands), (
             "Inventory pull=false was ignored"
         )
         print(
-            "Passed: inventory overrides, real Compose, HTTPS, idempotence, root-mode switchback and scheduler refresh after image updates. Docker mutations were simulated."
+            "Passed: release defaults, inventory overrides, key retention, real Compose, HTTPS, idempotence, root-mode switchback and scheduler refresh after image updates. Docker mutations were simulated."
         )
     finally:
         if server:

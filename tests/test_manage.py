@@ -1,6 +1,7 @@
 import argparse
 import base64
 import importlib.util
+import io
 import json
 import os
 import tempfile
@@ -68,6 +69,41 @@ COMPOSE_PROJECT_NAME=modern-ui-test
             "ghcr.io/feldsam-inc/mailcow-rest-v2:latest",
             "ghcr.io/feldsam-inc/mailcowui-ng:latest",
         )
+
+    def test_cli_defaults_install_the_fixed_preview_pair(self):
+        release = json.loads((manage.SOURCE / "deploy/release.json").read_text())
+        with patch("sys.argv", ["manage.py", "configure", "--mailcow-dir", str(self.root)]):
+            with patch("sys.stdout", new_callable=io.StringIO):
+                self.assertEqual(manage.main(), 0)
+        model = json.loads(manage.compose(self.root, "config", "--format", "json"))
+        for component, service in [("api", "restv2-mailcow"), ("ui", "ng-mailcow")]:
+            expected = release["images"][component]["image"]
+            self.assertRegex(expected, r"@sha256:[0-9a-f]{64}$")
+            self.assertEqual(model["services"][service]["image"], expected)
+
+    def test_cli_image_overrides_take_precedence_over_release_defaults(self):
+        args = [
+            "manage.py", "configure", "--mailcow-dir", str(self.root),
+            "--api-image", "ghcr.io/feldsam-inc/mailcow-rest-v2:custom",
+            "--ui-image", "ghcr.io/feldsam-inc/mailcowui-ng:custom",
+        ]
+        with patch("sys.argv", args), patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(manage.main(), 0)
+        model = json.loads(manage.compose(self.root, "config", "--format", "json"))
+        self.assertEqual(model["services"]["restv2-mailcow"]["image"], args[-3])
+        self.assertEqual(model["services"]["ng-mailcow"]["image"], args[-1])
+
+    def test_invalid_release_defaults_fail_before_configuration_changes(self):
+        source = self.root / "invalid-release"
+        (source / "deploy").mkdir(parents=True)
+        (source / "deploy/release.json").write_text('{"images": {}}')
+        with patch.object(manage, "SOURCE", source):
+            with patch("sys.argv", ["manage.py", "configure", "--mailcow-dir", str(self.root)]):
+                with patch("sys.stderr", new_callable=io.StringIO) as error:
+                    self.assertEqual(manage.main(), 1)
+        self.assertIn("release manifest", error.getvalue())
+        self.assertFalse((self.root / "modern-ui").exists())
+        self.assertFalse((self.root / "docker-compose.override.yml").exists())
 
     def test_compose_paths_secrets_and_service_isolation(self):
         self.assertTrue(self.configure())
