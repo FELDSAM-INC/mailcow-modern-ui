@@ -37,8 +37,9 @@ offline `.html` copy.
 ## Installation
 
 Install on an **existing, running mailcow server** with HTTPS.
-The currently supported release is **mailcow `2026-09a`**, database schema
-`18082026_1200`. Other schemas fail the API readiness check.
+Use **mailcow `2026-09a` or newer**, including **`2026-10`**.
+Older releases are expected to work, but have not been tested yet.
+See [compatibility and the database schema check](docs/compatibility.md).
 This is a community development preview, maintained independently of the mailcow project.
 
 Both installation paths pull public images for **Linux AMD64 and ARM64**.

@@ -138,7 +138,9 @@ docker compose logs --tail 100 restv2-mailcow ng-mailcow
 docker compose logs --tail 100 nginx-mailcow
 ```
 
-- **Unsupported schema:** use a mailcow release supported by the API. Do not bypass readiness.
+- **Unsupported schema:** see [compatibility](compatibility.md). mailcow 2026-09a and
+  2026-10 share the accepted schema. A release with a different schema needs a compatible
+  API image; older releases remain untested. Do not bypass readiness.
 - **Images denied:** these images are public. Check the image spelling, registry reachability,
   and any stale local Docker credentials.
 - **Compose validation fails:** run `docker compose config --quiet` on the server. Avoid sharing

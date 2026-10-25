@@ -3,7 +3,10 @@
 Run these commands on an **existing mailcow server**, as root or with `sudo`.
 Use one block at a time and stop if it fails.
 
-You need mailcow **2026-09a** (schema `18082026_1200`), a working HTTPS certificate,
+Use mailcow **2026-09a or newer**, including **2026-10**. Older releases are expected
+to work, but have not been tested yet; see [compatibility](compatibility.md).
+
+You also need a working HTTPS certificate,
 Git, Python **3.9+**, and Docker Compose **2.20.3+**. Docker, mailcow, and its database
 must already be running. Keep your usual mailcow backup before installing an addon.
 

@@ -66,3 +66,42 @@ jobs:
           gh release create "$GITHUB_REF_NAME" release-assets/* \
             --verify-tag --title "mailcow Modern UI — $title" \
             --notes-file "docs/releases/$version.md" --prerelease --latest=false
+
+  release-notes:
+    name: Update published preview notes
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      # Published tags, image pins, and release assets stay fixed; documentation can be corrected.
+      - name: Sync corrected notes for existing previews
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, re, subprocess
+          from pathlib import Path
+
+          def gh(*args):
+              return json.loads(subprocess.check_output(["gh", *args], text=True))
+
+          releases = gh("release", "list", "--exclude-drafts", "--limit", "100", "--json", "tagName")
+          for release in releases:
+              tag = release["tagName"]
+              if not re.fullmatch(r"v0\.\d+\.\d+-preview\.[1-9]\d*", tag):
+                  continue
+              notes = Path("docs/releases") / (tag[1:] + ".md")
+              if not notes.is_file():
+                  continue
+              current = gh("release", "view", tag, "--json", "body")["body"]
+              if current.strip() != notes.read_text().strip():
+                  subprocess.run(["gh", "release", "edit", tag, "--notes-file", str(notes)], check=True)
+                  print("Updated release notes: " + tag)
+          PY
