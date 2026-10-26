@@ -14,7 +14,7 @@ The target Python version must also be supported by that Ansible release.
 ## 1. Download
 
 ```bash
-git clone --branch v0.1.0-preview.2 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git
+git clone --branch v0.1.0-preview.3 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git
 ```
 
 ```bash
@@ -69,7 +69,7 @@ git fetch --tags origin
 Select the desired release (replace this tag when a newer release is available):
 
 ```bash
-git checkout v0.1.0-preview.2
+git checkout v0.1.0-preview.3
 ```
 
 Then rerun the install command with the same inventory. The application key is retained.

@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0-preview.2",
-  "name": "Community Preview 2",
+  "version": "0.1.0-preview.3",
+  "name": "Community Preview 3",
   "prerelease": true,
   "mailcow": {
     "release": "2026-09a",
@@ -8,12 +8,12 @@
   },
   "images": {
     "api": {
-      "image": "ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:33d8b9590ca6771a74f079feddecc978a7541733faef031f42a0525f6bfc7faf",
-      "revision": "4bb438380da56925174e71a909b9fe5980fde6b0"
+      "image": "ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:88987ced686abe0ba96cc1b865c0a5e41721b702940d511fcc6977ace392a8d3",
+      "revision": "7bb21ee908bc12140cc4cd8c29942010419a1894"
     },
     "ui": {
-      "image": "ghcr.io/feldsam-inc/mailcowui-ng@sha256:e6f27e9a380fbd18520b1abb128442328f6c19256afa343c272f2303a5b10086",
-      "revision": "7edd04c996ecb380fcb1242ba5b43cd910b36225"
+      "image": "ghcr.io/feldsam-inc/mailcowui-ng@sha256:17421f11326ba196fe8fa39bb4f4d7708f140cf9f2b797357a1e0dc927fb0eff",
+      "revision": "e458e75b03e1fbddd402c145cfeb76bffca27ea8"
     }
   }
 }
