@@ -44,7 +44,7 @@ git -C /opt/mailcow-modern-ui fetch --tags origin
 Select the release to install (replace the tag below when a newer release is available):
 
 ```bash
-git -C /opt/mailcow-modern-ui checkout v0.1.0-preview.3
+git -C /opt/mailcow-modern-ui checkout v0.1.0-preview.4
 ```
 
 ```bash
