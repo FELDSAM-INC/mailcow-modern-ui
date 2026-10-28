@@ -3,6 +3,16 @@
 These checks complement Codex Security and manual review. They do not certify that the application
 is secure. Scanner configuration and tool versions are reviewed code.
 
+## Required local scans before a release
+
+The maintainer requires fresh subscription-based Codex Security repository scans
+of **both API and UI** before releasing changed code, including previews. Follow
+[the release rule in AGENTS.md](../AGENTS.md): scan the exact component commits,
+review findings and coverage, fix confirmed issues, and retain evidence privately.
+Codex loads the root rule automatically; Claude Code imports it through
+`CLAUDE.md`. Failed, incomplete, dry-run, or stale scans do not satisfy this rule.
+This requirement is separate from the advisory paid PR scan described below.
+
 ## Routine checks
 
 The normal CI workflow calls `security.yml` on pull requests, main pushes and release tags.
