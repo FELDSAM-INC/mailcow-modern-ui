@@ -1,10 +1,10 @@
 # Install with Ansible
 
 Run Ansible on your workstation or automation host. It connects over SSH to an
-**existing, running mailcow server**. The helper on `main` supports Python 3.6+ (older
-preview tags require Python 3.9+). The server's Python version must also be supported
+**existing, running mailcow server**. The Preview 6 deployment helper supports Python 3.6+
+(Preview 5 and earlier require Python 3.9+). The server's Python version must also be supported
 by your controller's Ansible release. The server needs Docker Compose 2.20.3+, mailcow
-**2026-09a or newer** (including **2026-10**), and a working HTTPS URL.
+**2026-09a or newer** (including **2026-10 and 2026-11**), and a working HTTPS URL.
 Older mailcow releases remain untested. `2026-09` shares the accepted schema; releases
 through `2026-07b` currently fail the API's schema check.
 See [compatibility and the database schema check](compatibility.md).
@@ -16,7 +16,7 @@ The target Python version must also be supported by that Ansible release.
 ## 1. Download
 
 ```bash
-git clone --branch v0.1.0-preview.5 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git
+git clone --branch v0.1.0-preview.6 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git
 ```
 
 ```bash
@@ -71,7 +71,7 @@ git fetch --tags origin
 Select the desired release (replace this tag when a newer release is available):
 
 ```bash
-git checkout v0.1.0-preview.5
+git checkout v0.1.0-preview.6
 ```
 
 Then rerun the install command with the same inventory. The application key is retained.
@@ -95,16 +95,16 @@ tags select the moving development channel.
 
 ## Existing custom installations
 
-This mode is available on `main`; use an up-to-date `main` checkout on your controller
-until it is included in a new preview. Existing preview tags keep their original installer.
+This mode is included in Preview 6. Check out `v0.1.0-preview.6` or newer on your
+controller; earlier preview tags keep their original installer.
 
 If the API and UI already live in your own `docker-compose.override.yml`, add this to
 that host's inventory entry:
 
 ```yaml
 modern_ui_existing_installation: true
-modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2:latest
-modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng:latest
+modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2:0.1.0-preview.6
+modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng:0.1.0-preview.6
 ```
 
 Use published version tags or digests for fixed builds. The playbook changes only the

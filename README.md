@@ -3,8 +3,8 @@
 A modern web interface for mailcow, with compact desktop tables, mobile layouts,
 light and dark themes, and a shared design across administration and account settings.
 
-**[Community Preview 5 — v0.1.0-preview.5](https://github.com/FELDSAM-INC/mailcow-modern-ui/releases/tag/v0.1.0-preview.5)**
-is the current community prerelease. See its [release notes](docs/releases/0.1.0-preview.5.md)
+**[Community Preview 6 — v0.1.0-preview.6](https://github.com/FELDSAM-INC/mailcow-modern-ui/releases/tag/v0.1.0-preview.6)**
+is the current community prerelease. See its [release notes](docs/releases/0.1.0-preview.6.md)
 for the fixed component builds, requirements, and validation scope.
 
 **[Install manually](docs/installation.md) · [Install with Ansible](docs/ansible.md) ·
@@ -34,15 +34,15 @@ The [full gallery](https://feldsam-inc.github.io/mailcow-modern-ui/) opens direc
 browser and includes both themes. Use its **Download this showcase** button for an
 offline `.html` copy.
 
-The `main` branches also add mailcow 2026-11 features: mailbox groups, shared mailboxes,
-identity synchronization, OAuth sync sources, queue controls, and legacy API-key management.
-The currently pinned Preview 5 images need replacement with the adapted component builds;
+Community Preview 6 adds mailcow 2026-11 support: mailbox groups, shared mailboxes,
+identity synchronization and offboarding, OAuth sync sources, queue controls, and
+legacy API-key management. Earlier supported mailcow versions remain compatible;
 see [compatibility](docs/compatibility.md) before updating mailcow.
 
 ## Installation
 
 Install on an **existing, running mailcow server** with HTTPS.
-Use **mailcow `2026-09a` or newer**, including **`2026-10`**.
+Use **mailcow `2026-09a` or newer**, including **`2026-10` and `2026-11`**.
 Older releases remain untested: `2026-09` shares the accepted schema, while releases
 through `2026-07b` currently fail the API's schema check.
 See [compatibility and the database schema check](docs/compatibility.md).
@@ -66,7 +66,7 @@ custom overrides, and stores the application key privately. The API creates its 
 
 Both installers default to the fixed UI/API image digests in
 [deploy/release.json](deploy/release.json). Both images also have the version tag
-`0.1.0-preview.5`, matching the `v0.1.0-preview.5` Git release without its `v` prefix.
+`0.1.0-preview.6`, matching the `v0.1.0-preview.6` Git release without its `v` prefix.
 The component `latest` tags remain a moving development channel and require an explicit
 image override.
 

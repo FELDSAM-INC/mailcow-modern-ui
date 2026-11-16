@@ -1,9 +1,9 @@
 # mailcow compatibility
 
-Use **mailcow 2026-09a or newer**, including **2026-10**. The `main` branches now add **2026-11** support.
-The currently pinned Community Preview 5 images do **not** support its new schema;
-update both component images to the adapted builds before using it. A new preview
-release is a separate step. [Feature and migration notes](https://github.com/FELDSAM-INC/mailcow-rest-v2/blob/main/docs/mailcow-2026-11.md).
+Use **mailcow 2026-09a or newer**, including **2026-10 and 2026-11**.
+Community Preview 6 includes API, UI and installer support for the November release.
+Preview 5 and earlier do **not** support its new schema; update both component images
+before using mailcow 2026-11. [Feature and migration notes](https://github.com/FELDSAM-INC/mailcow-rest-v2/blob/v0.1.0-preview.6/docs/mailcow-2026-11.md).
 Older releases have not been fully tested. History confirms that `2026-09` shares the
 accepted schema; releases through `2026-07b` use older schemas and currently fail API readiness.
 
@@ -11,13 +11,13 @@ accepted schema; releases through `2026-07b` use older schemas and currently fai
 | --- | --- |
 | `2026-09a` | Supported; the database fixture and nginx integration tests use this baseline. |
 | `2026-10` | Supported; installation with Ansible, root URL mode, mobile/desktop login, API readiness, and the classic interface were verified on a running server. |
-| `2026-11` | Adapted API/UI on `main`; real upstream SQL fixture, separate version-dependent controls, and nginx integration tests. Not supported by Preview 5 or earlier. |
+| `2026-11` | Supported by Preview 6; real upstream SQL fixture, version-dependent controls, and nginx integration tests. Not supported by Preview 5 or earlier. |
 | `2026-09` | Schema definition is identical to `2026-09a` and `2026-10`; full installation remains untested. |
 | `2026-07b` and earlier | Older schemas; currently rejected by the API's readiness check. |
 
 ## Database schema
 
-The API on `main` accepts database schemas **`18082026_1200`** and **`02112026_1600`**.
+The API in Preview 6 accepts database schemas **`18082026_1200`** and **`02112026_1600`**.
 The latter is declared by `DB_VERSION` in upstream 2026-11 Compose configuration. Both
 [`2026-09a`](https://github.com/mailcow/mailcow-dockerized/blob/2026-09a/data/web/inc/init_db.inc.php)
 and [`2026-10`](https://github.com/mailcow/mailcow-dockerized/blob/2026-10/data/web/inc/init_db.inc.php)

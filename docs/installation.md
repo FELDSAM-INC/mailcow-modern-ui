@@ -3,22 +3,22 @@
 Run these commands on an **existing mailcow server**, as root or with `sudo`.
 Use one block at a time and stop if it fails.
 
-Use mailcow **2026-09a or newer**, including **2026-10**. Older releases remain untested:
+Use mailcow **2026-09a or newer**, including **2026-10 and 2026-11**. Older releases remain untested:
 `2026-09` shares the accepted schema, while releases through `2026-07b` currently fail
 the API's schema check. See [compatibility and schema history](compatibility.md).
 
 You also need a working HTTPS certificate,
-Git, Python **3.9+** for the published preview's helper, and Docker Compose **2.20.3+**.
+Git, Python **3.6+** for the deployment helper, and Docker Compose **2.20.3+**.
 Docker, mailcow, and its database must already be running. Keep your usual mailcow
 backup before installing an addon.
 
-The helper on `main` also supports Python **3.6+** and the existing-installation update
-mode below. Those installer fixes are not included in older preview tags.
+Community Preview 6 includes support for Python **3.6+** and the existing-installation
+update mode below. Preview 5 and earlier require Python **3.9+**.
 
 ## 1. Download
 
 ```bash
-git clone --branch v0.1.0-preview.5 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
+git clone --branch v0.1.0-preview.6 --depth 1 https://github.com/FELDSAM-INC/mailcow-modern-ui.git /opt/mailcow-modern-ui
 ```
 
 ## 2. Set your mailcow directory
@@ -38,8 +38,8 @@ python3 /opt/mailcow-modern-ui/scripts/manage.py configure --mailcow-dir "$MAILC
 
 The default image pair is pinned in [this preview's release manifest](../deploy/release.json).
 Re-running these commands installs the same UI and API builds.
-The same builds are publicly available as `ghcr.io/feldsam-inc/mailcow-rest-v2:0.1.0-preview.5`
-and `ghcr.io/feldsam-inc/mailcowui-ng:0.1.0-preview.5`; the installer uses their fixed digests.
+The same builds are publicly available as `ghcr.io/feldsam-inc/mailcow-rest-v2:0.1.0-preview.6`
+and `ghcr.io/feldsam-inc/mailcowui-ng:0.1.0-preview.6`; the installer uses their fixed digests.
 
 This adds a managed `include` to `docker-compose.override.yml`, preserves other
 services and comments, generates the application key once, and validates Compose.
@@ -165,11 +165,10 @@ It expects mailcow's usual `.env` symlink to `mailcow.conf`.
 
 **Already using the API/UI:** `update-images` updates an existing custom deployment
 whose two services have ordinary block-style definitions and literal image references
-in `docker-compose.override.yml`. Use the installer from `main` until these changes are
-included in a new preview:
+in `docker-compose.override.yml`. Use the installer from Preview 6 or newer:
 
 ```bash
-python3 /opt/mailcow-modern-ui/scripts/manage.py update-images --mailcow-dir "$MAILCOW_DIR" --api-image ghcr.io/feldsam-inc/mailcow-rest-v2:latest --ui-image ghcr.io/feldsam-inc/mailcowui-ng:latest
+python3 /opt/mailcow-modern-ui/scripts/manage.py update-images --mailcow-dir "$MAILCOW_DIR" --api-image ghcr.io/feldsam-inc/mailcow-rest-v2:0.1.0-preview.6 --ui-image ghcr.io/feldsam-inc/mailcowui-ng:0.1.0-preview.6
 ```
 
 Use published version tags or digests instead of `latest` to pin a fixed pair. This
