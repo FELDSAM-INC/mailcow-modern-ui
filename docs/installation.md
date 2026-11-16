@@ -8,8 +8,12 @@ Use mailcow **2026-09a or newer**, including **2026-10**. Older releases remain 
 the API's schema check. See [compatibility and schema history](compatibility.md).
 
 You also need a working HTTPS certificate,
-Git, Python **3.9+**, and Docker Compose **2.20.3+**. Docker, mailcow, and its database
-must already be running. Keep your usual mailcow backup before installing an addon.
+Git, Python **3.9+** for the published preview's helper, and Docker Compose **2.20.3+**.
+Docker, mailcow, and its database must already be running. Keep your usual mailcow
+backup before installing an addon.
+
+The helper on `main` also supports Python **3.6+** and the existing-installation update
+mode below. Those installer fixes are not included in older preview tags.
 
 ## 1. Download
 
@@ -159,9 +163,26 @@ existing `restv2-mailcow` / `ng-mailcow` services, an existing unmanaged nginx s
 an existing top-level `include`, flow-style YAML, or a custom `COMPOSE_FILE` setup.
 It expects mailcow's usual `.env` symlink to `mailcow.conf`.
 
-**Already using the API/UI:** keep your current deployment and follow its existing
-upgrade instructions. This repository is not an automatic migration of a hand-edited
-installation. Preserve the application key and any custom environment/mount settings.
+**Already using the API/UI:** `update-images` updates an existing custom deployment
+whose two services have ordinary block-style definitions and literal image references
+in `docker-compose.override.yml`. Use the installer from `main` until these changes are
+included in a new preview:
+
+```bash
+python3 /opt/mailcow-modern-ui/scripts/manage.py update-images --mailcow-dir "$MAILCOW_DIR" --api-image ghcr.io/feldsam-inc/mailcow-rest-v2:latest --ui-image ghcr.io/feldsam-inc/mailcowui-ng:latest
+```
+
+Use published version tags or digests instead of `latest` to pin a fixed pair. This
+command changes only the two image references. It preserves the existing application
+key, environment files, branding, mounts, nginx routes, and other services. It saves a
+private backup in `modern-ui/override.before-image-update`, verifies that all other
+effective Compose settings are identical, and restores the override on failure. It
+does not create a managed installation or start containers.
+
+For an automated pull, restart and health check, use Ansible's
+[`modern_ui_existing_installation` mode](ansible.md#existing-custom-installations).
+Other layouts still require manual integration. Keep the existing nginx routing when
+using this update mode; `activate` and `deactivate` are for managed installations.
 
 **Existing top-level `include`:** you can integrate manually. Copy the two service
 definitions from [the template](../deploy/compose.yml) into your Compose configuration,

@@ -7,6 +7,7 @@ configuration: both can contain secrets. Container startup remains an explicit s
 
 import argparse
 import base64
+import copy
 import json
 import os
 import re
@@ -64,7 +65,11 @@ class InstallError(Exception):
 
 
 def run(args, cwd):
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
+    # Python 3.6 is still the system interpreter on some existing mailcow hosts.
+    result = subprocess.run(
+        args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, check=False,
+    )
     if result.returncode:
         # Docker errors can echo interpolated passwords. Keep them out of CI logs.
         raise InstallError("Command failed: " + " ".join(args) + ". Inspect it on the server.")
@@ -115,7 +120,10 @@ def write(path, content, mode=0o600):
 
 def restore(path, previous):
     if previous is None:
-        path.unlink(missing_ok=True)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
     else:
         write(path, *previous)
 
@@ -216,6 +224,83 @@ def image_reference(value):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@+-]*", value):
         raise argparse.ArgumentTypeError("Use a container image tag or digest, without whitespace.")
     return value
+
+
+def replace_service_images(text, images):
+    """Edit ordinary block-style service image lines without rewriting operator YAML."""
+    in_services = False
+    service = None
+    counts = {name: 0 for name in images}
+    output = []
+    for line in text.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        if content.strip() and not content.lstrip().startswith("#"):
+            if not content[0].isspace():
+                in_services = bool(re.fullmatch(r"services:[ \t]*(?:#.*)?", content))
+                service = None
+            elif in_services and re.match(r"^  \S", content):
+                match = re.fullmatch(r"  ([A-Za-z0-9_.-]+):[ \t]*(?:#.*)?", content)
+                service = match[1] if match else None
+            elif in_services and service in images and re.match(r"^    image\s*:", content):
+                match = re.fullmatch(
+                    r"    image:[ \t]*(['\"]?)([A-Za-z0-9][A-Za-z0-9._/:@+-]*)\1"
+                    r"([ \t]*(?:#.*)?)", content,
+                )
+                if not match:
+                    raise InstallError("Update requires a literal image tag or digest in each addon service.")
+                counts[service] += 1
+                line = "    image: " + json.dumps(images[service]) + match[3] + line[len(content):]
+        output.append(line)
+    if any(count != 1 for count in counts.values()):
+        raise InstallError(
+            "Expected both addon services with one image each in docker-compose.override.yml. "
+            "Other Compose layouts require manual integration."
+        )
+    return "".join(output)
+
+
+def compose_model(root):
+    try:
+        model = json.loads(compose(root, "config", "--format", "json"))
+        if not isinstance(model, dict) or not isinstance(model.get("services"), dict):
+            raise ValueError()
+        return model
+    except (ValueError, TypeError):
+        raise InstallError("Cannot validate the existing Compose configuration.") from None
+
+
+def update_images(root, api_image, ui_image):
+    """Explicit legacy update: preserve keys, branding, mounts, routing and other services."""
+    preflight(root)
+    if owned(root):
+        raise InstallError("This installation is managed; use configure instead of update-images.")
+    override = root / "docker-compose.override.yml"
+    previous = snapshot(override)
+    if previous is None:
+        raise InstallError("An existing docker-compose.override.yml is required for update-images.")
+    images = dict(zip(SERVICES, map(image_reference, (api_image, ui_image))))
+    text = replace_service_images(previous[0].decode(), images)
+    before = compose_model(root)
+    expected = copy.deepcopy(before)
+    for service, image in images.items():
+        if not isinstance(expected["services"].get(service), dict):
+            raise InstallError("Both addon services must already be configured.")
+        expected["services"][service]["image"] = image
+    if before == expected:
+        return False
+    directory = private_directory(root)
+    backup = directory / "override.before-image-update"
+    snapshot(backup)
+    if not backup.exists():
+        write(backup, previous[0])
+    try:
+        write(override, text, previous[1])
+        if compose_model(root) != expected:
+            raise InstallError("Image update changed other Compose settings; the original override was restored.")
+    except (InstallError, OSError):
+        restore(override, previous)
+        raise
+    return True
 
 
 def configure(root, api_image, ui_image):
@@ -413,7 +498,7 @@ def detach(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["configure", "activate", "deactivate", "detach"])
+    parser.add_argument("action", choices=["configure", "update-images", "activate", "deactivate", "detach"])
     parser.add_argument("--mailcow-dir", type=Path, required=True)
     parser.add_argument(
         "--ui-path",
@@ -435,7 +520,7 @@ def main():
         parser.error("--ui-path is only supported with activate")
     root = args.mailcow_dir.resolve()
     try:
-        if args.action == "configure":
+        if args.action in ("configure", "update-images"):
             if args.api_image is None or args.ui_image is None:
                 try:
                     release = json.loads((SOURCE / "deploy/release.json").read_text())
@@ -447,7 +532,8 @@ def main():
                     ) from None
                 args.api_image = args.api_image or api_image
                 args.ui_image = args.ui_image or ui_image
-            changed = configure(root, args.api_image, args.ui_image)
+            operation = update_images if args.action == "update-images" else configure
+            changed = operation(root, args.api_image, args.ui_image)
         elif args.action == "detach":
             changed = detach(root)
         else:

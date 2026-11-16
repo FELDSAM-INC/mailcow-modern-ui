@@ -1,8 +1,10 @@
 # Install with Ansible
 
 Run Ansible on your workstation or automation host. It connects over SSH to an
-**existing, running mailcow server**. The server needs Python 3.9+, Docker Compose
-2.20.3+, mailcow **2026-09a or newer** (including **2026-10**), and a working HTTPS URL.
+**existing, running mailcow server**. The helper on `main` supports Python 3.6+ (older
+preview tags require Python 3.9+). The server's Python version must also be supported
+by your controller's Ansible release. The server needs Docker Compose 2.20.3+, mailcow
+**2026-09a or newer** (including **2026-10**), and a working HTTPS URL.
 Older mailcow releases remain untested. `2026-09` shares the accepted schema; releases
 through `2026-07b` currently fail the API's schema check.
 See [compatibility and the database schema check](compatibility.md).
@@ -81,6 +83,7 @@ Ofelia restart. Pulling checks for a newer image; a new image can recreate its s
 | `mailcow_dir` | Required | Existing mailcow directory |
 | `mailcow_url` | Required | Public HTTPS origin |
 | `modern_ui_path` | `/ng/` | Browser URL path: `/ng/` or `/` |
+| `modern_ui_existing_installation` | `false` | Update only the images in an existing custom API/UI deployment |
 | `modern_ui_api_image` | Release manifest API digest | Override the API image tag or digest |
 | `modern_ui_web_image` | Release manifest UI digest | Override the UI image tag or digest |
 | `modern_ui_tools_dir` | `/opt/mailcow-modern-ui` | Remote deployment helper directory |
@@ -89,6 +92,33 @@ Ofelia restart. Pulling checks for a newer image; a new image can recreate its s
 Release defaults already use fixed digests. Explicit inventory image settings override
 them; remove those settings to follow the selected release's image pair. The `:latest`
 tags select the moving development channel.
+
+## Existing custom installations
+
+This mode is available on `main`; use an up-to-date `main` checkout on your controller
+until it is included in a new preview. Existing preview tags keep their original installer.
+
+If the API and UI already live in your own `docker-compose.override.yml`, add this to
+that host's inventory entry:
+
+```yaml
+modern_ui_existing_installation: true
+modern_ui_api_image: ghcr.io/feldsam-inc/mailcow-rest-v2:latest
+modern_ui_web_image: ghcr.io/feldsam-inc/mailcowui-ng:latest
+```
+
+Use published version tags or digests for fixed builds. The playbook changes only the
+two service images, pulls them explicitly (including installations with `pull_policy:
+never`), starts the two services, refreshes Ofelia when needed, and checks HTTPS health.
+It preserves your application key, environment files, branding, mounts and nginx
+configuration. Set `modern_ui_path` to the already configured UI path; this mode does
+not change routing. It does not create a managed installation or replace custom settings.
+
+Both services must have block-style definitions with literal image references in
+`docker-compose.override.yml`. Other Compose layouts require manual integration. The
+helper backs up the override and rolls back if validation detects any other effective
+configuration change. Leave this option disabled for installations created by this
+repository's managed installer.
 
 This playbook follows the same
 [existing-installation restrictions](installation.md#existing-installations-and-custom-compose-layouts)

@@ -1,0 +1,6 @@
+#!/bin/sh
+# The Python compatibility container needs Compose config/version, not a Docker daemon.
+set -eu
+test "$1" = compose
+shift
+exec /usr/local/bin/docker-compose "$@"

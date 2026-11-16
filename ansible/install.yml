@@ -15,6 +15,7 @@
         modern_ui_web_image: "{{ modern_ui_web_image | default(modern_ui_release.images.ui.image) }}"
         modern_ui_pull: "{{ modern_ui_pull | default(true) }}"
         modern_ui_path: "{{ modern_ui_path | default('/ng/') }}"
+        modern_ui_existing_installation: "{{ modern_ui_existing_installation | default(false) | bool }}"
 
     - name: Check required settings
       ansible.builtin.assert:
@@ -56,12 +57,12 @@
         - deploy/sources.json
         - deploy/release.json
 
-    - name: Configure the addon and preserve its existing application key
+    - name: Configure the addon or update the existing custom installation
       ansible.builtin.command:
         argv:
           - python3
           - "{{ modern_ui_tools_dir }}/scripts/manage.py"
-          - configure
+          - "{{ 'update-images' if modern_ui_existing_installation else 'configure' }}"
           - --mailcow-dir
           - "{{ mailcow_dir }}"
           - --api-image
@@ -75,7 +76,17 @@
       ansible.builtin.command:
         argv: [docker, compose, pull, restv2-mailcow, ng-mailcow]
         chdir: "{{ mailcow_dir }}"
-      when: modern_ui_pull | bool
+      when: modern_ui_pull | bool and not modern_ui_existing_installation
+      changed_when: false
+
+    - name: Pull selected images for the existing custom installation
+      ansible.builtin.command:
+        argv: [docker, pull, "{{ item }}"]
+        chdir: "{{ mailcow_dir }}"
+      loop:
+        - "{{ modern_ui_api_image }}"
+        - "{{ modern_ui_web_image }}"
+      when: modern_ui_pull | bool and modern_ui_existing_installation
       changed_when: false
 
     - name: Start the API and UI and wait for readiness
@@ -109,13 +120,14 @@
           - --ui-path
           - "{{ modern_ui_path }}"
       register: modern_ui_routes
+      when: not modern_ui_existing_installation
       changed_when: modern_ui_routes.rc == 0 and (modern_ui_routes.stdout | from_json).changed
 
     - name: Refresh Ofelia's container job discovery
       ansible.builtin.command:
         argv: [docker, compose, restart, ofelia-mailcow]
         chdir: "{{ mailcow_dir }}"
-      when: modern_ui_configure.changed or modern_ui_start.changed or modern_ui_routes.changed
+      when: modern_ui_configure.changed or modern_ui_start.changed or (modern_ui_routes.changed | default(false))
       changed_when: true
 
     - name: Verify API readiness over HTTPS

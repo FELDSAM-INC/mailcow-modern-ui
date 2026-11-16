@@ -4,16 +4,39 @@ import importlib.util
 import io
 import json
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location(
-    "manage", Path(__file__).parents[1] / "scripts/manage.py"
+    "manage", str(Path(__file__).parents[1] / "scripts/manage.py")
 )
 manage = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(manage)
+
+
+class RuntimeTests(unittest.TestCase):
+    def test_process_output_is_text_and_failed_processes_do_not_leak_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(manage.run([sys.executable, "-c", "print('ready')"], directory), "ready\n")
+            # The command itself is intentionally included, so generate output absent from argv.
+            with self.assertRaises(manage.InstallError) as failure:
+                manage.run([sys.executable, "-c", "import sys; print(chr(83)*20); sys.stderr.write(chr(84)*20); sys.exit(1)"], directory)
+            self.assertNotIn("S" * 20, str(failure.exception))
+            self.assertNotIn("T" * 20, str(failure.exception))
+
+    def test_restore_removes_new_files_and_ignores_only_missing_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "new-config"
+            manage.restore(path, None)
+            path.write_text("temporary")
+            manage.restore(path, None)
+            self.assertFalse(path.exists())
+            path.mkdir()
+            with self.assertRaises(IsADirectoryError):
+                manage.restore(path, None)
 
 
 class InstallationTests(unittest.TestCase):
@@ -240,6 +263,104 @@ COMPOSE_PROJECT_NAME=modern-ui-test
             self.configure()
         self.assertEqual(route.read_text(), "existing installation")
 
+    def legacy_installation(self):
+        directory = self.root / "restv2"
+        directory.mkdir()
+        (directory / "restv2.env").write_text(
+            "APP_KEY=base64:" + base64.b64encode(b"k" * 32).decode() + "\n"
+            "RESTV2_DEFAULT_UI_NAME=Existing brand\n"
+            "RESTV2_DEFAULT_LOGO_URL=/img/operator.svg\n"
+        )
+        text = """# Existing operator settings must survive updates.
+services:
+  nginx-mailcow:
+    restart: unless-stopped
+  restv2-mailcow:
+    image: example.invalid/api:old # locally built API
+    pull_policy: never
+    env_file: ./restv2/restv2.env
+    environment:
+      RESTV2_DEFAULT_DKIM_SELECTOR: operator
+    volumes:
+      - ./restv2:/operator-config:ro
+    labels:
+      operator.custom: retained
+    networks: [mailcow-network]
+  ng-mailcow:
+    image: 'example.invalid/ui:old'
+    networks: [mailcow-network]
+"""
+        (self.root / "docker-compose.override.yml").write_text(text)
+        (self.root / "data/conf/nginx/site.restv2.custom").write_text("existing operator routes\n")
+        return text
+
+    def test_existing_update_changes_only_images_and_preserves_branding_key_and_routes(self):
+        original = self.legacy_installation()
+        secret = (self.root / "restv2/restv2.env").read_bytes()
+        before = manage.compose_model(self.root)
+        api, ui = "example.invalid/api:new", "example.invalid/ui:new"
+        args = ["manage.py", "update-images", "--mailcow-dir", str(self.root),
+                "--api-image", api, "--ui-image", ui]
+        with patch("sys.argv", args), patch("sys.stdout", new_callable=io.StringIO) as output:
+            self.assertEqual(manage.main(), 0)
+        self.assertEqual(json.loads(output.getvalue()), {"changed": True, "action": "update-images"})
+        before["services"]["restv2-mailcow"]["image"] = api
+        before["services"]["ng-mailcow"]["image"] = ui
+        self.assertEqual(manage.compose_model(self.root), before)
+        self.assertEqual((self.root / "restv2/restv2.env").read_bytes(), secret)
+        self.assertEqual((self.root / "data/conf/nginx/site.restv2.custom").read_text(), "existing operator routes\n")
+        self.assertFalse(manage.owned(self.root))
+        self.assertFalse((self.root / "modern-ui/secrets.env").exists())
+        backup = self.root / "modern-ui/override.before-image-update"
+        self.assertEqual(backup.read_text(), original)
+        self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
+        self.assertFalse(manage.update_images(self.root, api, ui))
+        self.assertIn("# locally built API", (self.root / "docker-compose.override.yml").read_text())
+
+    def test_existing_update_rolls_back_when_other_effective_settings_change(self):
+        original = self.legacy_installation()
+        execute = manage.compose
+        reads = []
+
+        def changed_configuration(root, *args):
+            result = execute(root, *args)
+            if args == ("config", "--format", "json"):
+                reads.append(True)
+                if len(reads) == 2:
+                    model = json.loads(result)
+                    model["services"]["restv2-mailcow"]["environment"]["APP_KEY"] = "changed"
+                    return json.dumps(model)
+            return result
+
+        with patch.object(manage, "compose", side_effect=changed_configuration):
+            with self.assertRaisesRegex(manage.InstallError, "other Compose settings"):
+                manage.update_images(self.root, "example.invalid/api:new", "example.invalid/ui:new")
+        self.assertEqual((self.root / "docker-compose.override.yml").read_text(), original)
+
+    def test_existing_update_rolls_back_when_compose_validation_fails(self):
+        original = self.legacy_installation()
+        model = manage.compose_model(self.root)
+        with patch.object(manage, "compose_model", side_effect=[model, manage.InstallError("invalid")]):
+            with self.assertRaises(manage.InstallError):
+                manage.update_images(self.root, "example.invalid/api:new", "example.invalid/ui:new")
+        self.assertEqual((self.root / "docker-compose.override.yml").read_text(), original)
+
+    def test_existing_update_rejects_nonliteral_images_and_managed_installations(self):
+        original = self.legacy_installation()
+        override = self.root / "docker-compose.override.yml"
+        override.write_text(original.replace("example.invalid/api:old", "${OPERATOR_IMAGE}"))
+        with self.assertRaisesRegex(manage.InstallError, "literal image"):
+            manage.update_images(self.root, "example.invalid/api:new", "example.invalid/ui:new")
+        self.assertFalse((self.root / "modern-ui").exists())
+        override.write_text(original.replace("  ng-mailcow:\n    image: 'example.invalid/ui:old'", "  ng-mailcow: {image: 'example.invalid/ui:old'}"))
+        with self.assertRaisesRegex(manage.InstallError, "one image each"):
+            manage.update_images(self.root, "example.invalid/api:new", "example.invalid/ui:new")
+        override.unlink()
+        (self.root / "data/conf/nginx/site.restv2.custom").unlink()
+        self.configure()
+        with self.assertRaisesRegex(manage.InstallError, "use configure"):
+            manage.update_images(self.root, "example.invalid/api:new", "example.invalid/ui:new")
+
     def test_failed_nginx_test_restores_previous_file(self):
         self.configure()
         route = self.root / "data/conf/nginx/site.restv2.custom"
@@ -306,10 +427,7 @@ COMPOSE_PROJECT_NAME=modern-ui-test
             ),
         ]
         for manifest in invalid:
-            with (
-                self.subTest(manifest=manifest),
-                patch.object(manage, "compose", return_value=manifest),
-            ):
+            with self.subTest(manifest=manifest), patch.object(manage, "compose", return_value=manifest):
                 with self.assertRaises(manage.InstallError):
                     manage.routes(self.root, ui_path="/")
                 self.assertFalse(
@@ -372,10 +490,7 @@ COMPOSE_PROJECT_NAME=modern-ui-test
 
     def test_rejects_image_injection(self):
         for value in ['image"\nprivileged: true', "image $(id)", ""]:
-            with (
-                self.subTest(value=value),
-                self.assertRaises(argparse.ArgumentTypeError),
-            ):
+            with self.subTest(value=value), self.assertRaises(argparse.ArgumentTypeError):
                 manage.image_reference(value)
 
 

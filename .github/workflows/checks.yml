@@ -24,6 +24,8 @@ jobs:
         run: docker compose version
       - name: Test installer safety and real Compose integration
         run: python3 -m unittest discover -s tests -v
+      - name: Verify installer compatibility with Python 3.6
+        run: scripts/test-python36.sh
       - name: Install Ansible for syntax validation
         run: |
           python3 -m venv .venv

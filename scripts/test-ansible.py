@@ -190,6 +190,63 @@ elif not any(word in args for word in ['pull', 'exec', 'restart']):
         assert not any("pull" in command for command in commands), (
             "Inventory pull=false was ignored"
         )
+        legacy = fixture.InstallationTests()
+        legacy.setUp()
+        try:
+            legacy.legacy_installation()
+            legacy_root = legacy.root
+            legacy_bin = legacy_root / "bin"
+            legacy_bin.mkdir()
+            (legacy_bin / "docker").write_text(wrapper)
+            (legacy_bin / "docker").chmod(0o755)
+            legacy_options = {
+                **options,
+                "mailcow_dir": str(legacy_root),
+                "modern_ui_tools_dir": str(legacy_root / "tools"),
+                "modern_ui_existing_installation": True,
+                "modern_ui_pull": True,
+                "modern_ui_api_image": "example.invalid/api:updated",
+                "modern_ui_web_image": "example.invalid/ui:updated",
+            }
+            legacy_env = {
+                **env,
+                "PATH": str(legacy_bin) + ":" + os.environ["PATH"],
+                "MODERN_UI_TEST_ROOT": str(legacy_root),
+            }
+            legacy_inventory = legacy_root / "inventory.json"
+            legacy_inventory.write_text(json.dumps({
+                "all": {"children": {"mailcow": {"hosts": {"fixture": legacy_options}}}},
+            }))
+            legacy_key = (legacy_root / "restv2/restv2.env").read_bytes()
+            legacy_routes = (legacy_root / "data/conf/nginx/site.restv2.custom").read_bytes()
+            expected_model = fixture.manage.compose_model(legacy_root)
+            expected_model["services"]["restv2-mailcow"]["image"] = legacy_options["modern_ui_api_image"]
+            expected_model["services"]["ng-mailcow"]["image"] = legacy_options["modern_ui_web_image"]
+            for attempt in (1, 2):
+                result = subprocess.run(
+                    [str(playbook), "-i", str(legacy_inventory), str(REPO / "ansible/install.yml")],
+                    env=legacy_env, text=True, capture_output=True, timeout=120,
+                )
+                if result.returncode:
+                    raise AssertionError(result.stdout + result.stderr)
+                recap = next(line for line in result.stdout.splitlines() if "unreachable=" in line)
+                if attempt == 2:
+                    assert re.search(r"changed=0\b", recap), recap
+                assert fixture.manage.compose_model(legacy_root) == expected_model
+                assert (legacy_root / "restv2/restv2.env").read_bytes() == legacy_key
+                assert (legacy_root / "data/conf/nginx/site.restv2.custom").read_bytes() == legacy_routes
+                assert not (legacy_root / "modern-ui/.managed-by").exists()
+                assert not (legacy_root / "modern-ui/secrets.env").exists()
+                print(f"Existing installation pass {attempt}: {recap.strip()}")
+            legacy_commands = [json.loads(line) for line in (legacy_root / "commands.jsonl").read_text().splitlines()]
+            assert [command for command in legacy_commands if command[0] == "pull"] == [
+                ["pull", legacy_options["modern_ui_api_image"]],
+                ["pull", legacy_options["modern_ui_web_image"]],
+            ] * 2
+            assert sum("restart" in command for command in legacy_commands) == 1
+            assert not any("exec" in command for command in legacy_commands), "Existing nginx routes must stay unchanged"
+        finally:
+            legacy.doCleanups()
         print(
             "Passed: release defaults, inventory overrides, key retention, real Compose, HTTPS, idempotence, root-mode switchback and scheduler refresh after image updates. Docker mutations were simulated."
         )
