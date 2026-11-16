@@ -1,0 +1,2 @@
+cfac8f259ef2e3754618a6357ba6ec7805bd286433e5ff6629ccd5b4bdccc1d4  tests/nginx/upstream/2026-11/nginx.conf.j2
+c79e6fe53b084b12165c95c4beefd9b5c2874d4ee3f7bfacb74fa1171fe7959d  tests/nginx/upstream/2026-11/sites-default.conf.j2

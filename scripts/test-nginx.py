@@ -30,12 +30,12 @@ def run(args, cwd=None, **kwargs):
     ).stdout
 
 
-def request(origin, path, method="GET", host="mail.example.org", data=None):
+def request(origin, path, method="GET", host="mail.example.org", data=None, headers=None):
     req = urllib.request.Request(
         origin + path,
         data=data,
         method=method,
-        headers={"Host": host, "Content-Type": "application/x-www-form-urlencoded"},
+        headers={"Host": host, "Content-Type": "application/x-www-form-urlencoded", **(headers or {})},
     )
 
     # Preserve Location and status instead of following SOGo/DAV redirects.
@@ -57,6 +57,7 @@ def request(origin, path, method="GET", host="mail.example.org", data=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--upstream", choices=["2026-09a", "2026-11"], default="2026-09a")
     parser.add_argument("--ui-source", type=Path)
     parser.add_argument("--ui-dist", type=Path)
     parser.add_argument("--browser-script", type=Path)
@@ -129,9 +130,13 @@ def main():
             SOGOHOST="backend",
             SKIP_RSPAMD=False,
             SKIP_SOGO=False,
+            NGINX_MAX_BODY_SIZE="128m",
         )
         engine = Environment(undefined=StrictUndefined)
-        upstream = REPO / "tests/nginx/upstream/2026-09a"
+        upstream = REPO / "tests/nginx/upstream" / args.upstream
+        installed_templates = root / "data/conf/nginx/templates"
+        installed_templates.mkdir()
+        (installed_templates / "nginx.conf.j2").write_bytes((upstream / "nginx.conf.j2").read_bytes())
         for name, target in [
             ("nginx.conf.j2", root / "nginx.conf"),
             ("sites-default.conf.j2", root / "includes/sites-default.conf"),
@@ -222,6 +227,14 @@ def main():
                 time.sleep(0.1)
             manage.routes(root)
             time.sleep(0.3)
+            if args.upstream == "2026-11":
+                active_config = manage.compose(root, "exec", "-T", "nginx-mailcow", "nginx", "-T")
+                assert "client_max_body_size 64m;" in active_config
+                assert "client_max_body_size 128m;" in active_config
+                assert "fastcgi_param REMOTE_ADDR $mailcow_client_ip;" in active_config
+            _, _, addressed = request(origin, "/api/v2/health/ready", headers={"X-Real-IP": "192.0.2.66"})
+            assert addressed["client_ip"] != "192.0.2.66", "External clients must not override their address"
+
             cases = [
                 ("/?oauth", "GET", "mail.example.org", None),
                 ("/?iam_sso=1", "GET", "mail.example.org", None),
@@ -299,6 +312,7 @@ def main():
                     "/domains",
                     "/mailboxes/alice%40example.org",
                     "/sso/return?code=test",
+                    "/sync-sources/oauth/return?code=test",
                 ]:
                     status, _, payload = request(origin, path)
                     assert status == 200 and payload["handler"] == "ui", (path, payload)
@@ -313,6 +327,8 @@ def main():
             credential = "private-routing-test-credential"
             for path in [
                 "/sso/return?code=" + credential,
+                "/ng/sync-sources/oauth/return?code=" + credential,
+                "/sync-sources/oauth/return?code=" + credential,
                 "/ng/reset-password?token=" + credential,
             ]:
                 assert request(origin, path)[0] == 502
@@ -325,7 +341,7 @@ def main():
             time.sleep(0.4)
             assert request(origin, "/")[2]["handler"] == "php"
             print(
-                f"Passed: {len(cases)} legacy requests, four internal listeners, root activation, outage log redaction and rollback."
+                f"Passed ({args.upstream}): {len(cases)} legacy requests, four internal listeners, root activation, outage log redaction and rollback."
             )
         except Exception as error:
             if isinstance(error, subprocess.CalledProcessError):

@@ -70,6 +70,14 @@ COMPOSE_PROJECT_NAME=modern-ui-test
             "ghcr.io/feldsam-inc/mailcowui-ng:latest",
         )
 
+    def test_nginx_client_address_uses_upstream_trust_rules_when_available(self):
+        self.assertIn("REMOTE_ADDR $remote_addr;", manage.nginx_template(self.root, "site.restv2.custom"))
+        templates = self.root / "data/conf/nginx/templates"
+        templates.mkdir()
+        (templates / "nginx.conf.j2").write_text("map $sogo_auth_internal $mailcow_client_ip { default $remote_addr; }\n")
+        self.assertIn("REMOTE_ADDR $mailcow_client_ip;", manage.nginx_template(self.root, "site.restv2.custom"))
+        self.assertIn("X-Real-IP $mailcow_client_ip;", manage.nginx_template(self.root, "modern-ui-root-proxy.custom"))
+
     def test_cli_defaults_install_the_fixed_preview_pair(self):
         release = json.loads((manage.SOURCE / "deploy/release.json").read_text())
         with patch("sys.argv", ["manage.py", "configure", "--mailcow-dir", str(self.root)]):

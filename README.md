@@ -34,6 +34,11 @@ The [full gallery](https://feldsam-inc.github.io/mailcow-modern-ui/) opens direc
 browser and includes both themes. Use its **Download this showcase** button for an
 offline `.html` copy.
 
+The `main` branches also add mailcow 2026-11 features: mailbox groups, shared mailboxes,
+identity synchronization, OAuth sync sources, queue controls, and legacy API-key management.
+The currently pinned Preview 5 images need replacement with the adapted component builds;
+see [compatibility](docs/compatibility.md) before updating mailcow.
+
 ## Installation
 
 Install on an **existing, running mailcow server** with HTTPS.

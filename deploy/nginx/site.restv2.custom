@@ -16,6 +16,8 @@ location ^~ /api/v2/ {
     include /etc/nginx/fastcgi_params;
     fastcgi_param SCRIPT_FILENAME /app/public/index.php;
     fastcgi_param SCRIPT_NAME /index.php;
+    fastcgi_param REMOTE_ADDR $remote_addr;
+    fastcgi_param HTTP_X_REAL_IP $remote_addr;
     # httpoxy mitigation: never pass a client "Proxy" header on as HTTP_PROXY.
     fastcgi_param HTTP_PROXY "";
     # Two domain footer texts of 1 MiB each, with JSON escaping (feature 002 research D21); feature
@@ -38,6 +40,8 @@ location ^~ /api/v2/ {
         include /etc/nginx/fastcgi_params;
         fastcgi_param SCRIPT_FILENAME /app/public/index.php;
         fastcgi_param SCRIPT_NAME /index.php;
+        fastcgi_param REMOTE_ADDR $remote_addr;
+        fastcgi_param HTTP_X_REAL_IP $remote_addr;
         fastcgi_param HTTP_PROXY "";
         client_max_body_size 16m;
         fastcgi_read_timeout 900s;
@@ -67,7 +71,7 @@ location ^~ /ng/ {
 
     # Credentials may arrive in a callback/query URL. The inner UI container's log settings
     # cannot redact this outer proxy's access log. Match Vue's case-insensitive, optional-slash routes.
-    location ~* ^/ng/(?:reset-password|sso/return)/?$ {
+    location ~* ^/ng/(?:reset-password|sso/return|sync-sources/oauth/return)/?$ {
         set $ng_upstream http://ng-mailcow:8080;
         proxy_pass $ng_upstream;
         access_log off;

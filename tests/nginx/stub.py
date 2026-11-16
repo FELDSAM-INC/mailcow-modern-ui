@@ -81,6 +81,7 @@ class FastCGI(socketserver.StreamRequestHandler):
             "query": params.get("QUERY_STRING"),
             "method": params.get("REQUEST_METHOD"),
             "internal": params.get("SOGO_AUTH_INTERNAL"),
+            "client_ip": params.get("REMOTE_ADDR"),
             "body": body.decode(),
         }
         payload = (

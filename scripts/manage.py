@@ -322,6 +322,17 @@ def root_route_pattern(root):
     return "|".join(sorted(set(roots)))
 
 
+def nginx_template(root, name):
+    """Use upstream's trusted client-address map when the installed mailcow provides it."""
+    content = (SOURCE / "deploy/nginx" / name).read_text()
+    template = root / "data/conf/nginx/templates/nginx.conf.j2"
+    if template.is_file() and re.search(
+        r"map\s+\$sogo_auth_internal\s+\$mailcow_client_ip\s*\{", template.read_text()
+    ):
+        content = content.replace("$remote_addr", "$mailcow_client_ip")
+    return content
+
+
 def routes(root, remove=False, ui_path=None):
     preflight(root)
     if not owned(root):
@@ -335,7 +346,7 @@ def routes(root, remove=False, ui_path=None):
     targets = {directory / name: None for name in ("site.restv2.custom", *ROOT_FILES)}
     if not remove:
         targets[directory / "site.restv2.custom"] = (
-            (SOURCE / "deploy/nginx/site.restv2.custom").read_bytes(),
+            nginx_template(root, "site.restv2.custom").encode(),
             0o644,
         )
         targets[mode] = ((selected + "\n").encode(), 0o600)
@@ -343,7 +354,7 @@ def routes(root, remove=False, ui_path=None):
             pattern = root_route_pattern(root)
             for name in ROOT_FILES:
                 content = (
-                    (SOURCE / "deploy/nginx" / name).read_text().replace("@ROOT_ROUTES@", pattern)
+                    nginx_template(root, name).replace("@ROOT_ROUTES@", pattern)
                 )
                 targets[directory / name] = (content.encode(), 0o644)
     before = {path: snapshot(path) for path in targets}

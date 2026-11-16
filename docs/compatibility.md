@@ -1,6 +1,9 @@
 # mailcow compatibility
 
-Use **mailcow 2026-09a or newer**, including **2026-10**.
+Use **mailcow 2026-09a or newer**, including **2026-10**. The `main` branches now add **2026-11** support.
+The currently pinned Community Preview 5 images do **not** support its new schema;
+update both component images to the adapted builds before using it. A new preview
+release is a separate step. [Feature and migration notes](https://github.com/FELDSAM-INC/mailcow-rest-v2/blob/main/docs/mailcow-2026-11.md).
 Older releases have not been fully tested. History confirms that `2026-09` shares the
 accepted schema; releases through `2026-07b` use older schemas and currently fail API readiness.
 
@@ -8,15 +11,17 @@ accepted schema; releases through `2026-07b` use older schemas and currently fai
 | --- | --- |
 | `2026-09a` | Supported; the database fixture and nginx integration tests use this baseline. |
 | `2026-10` | Supported; installation with Ansible, root URL mode, mobile/desktop login, API readiness, and the classic interface were verified on a running server. |
+| `2026-11` | Adapted API/UI on `main`; real upstream SQL fixture, separate version-dependent controls, and nginx integration tests. Not supported by Preview 5 or earlier. |
 | `2026-09` | Schema definition is identical to `2026-09a` and `2026-10`; full installation remains untested. |
 | `2026-07b` and earlier | Older schemas; currently rejected by the API's readiness check. |
 
 ## Database schema
 
-The current API accepts database schema **`18082026_1200`**. Both
+The API on `main` accepts database schemas **`18082026_1200`** and **`02112026_1600`**.
+The latter is declared by `DB_VERSION` in upstream 2026-11 Compose configuration. Both
 [`2026-09a`](https://github.com/mailcow/mailcow-dockerized/blob/2026-09a/data/web/inc/init_db.inc.php)
 and [`2026-10`](https://github.com/mailcow/mailcow-dockerized/blob/2026-10/data/web/inc/init_db.inc.php)
-declare that schema. Compatibility is checked by schema, not by an exact mailcow release name.
+declare the September/October schema. Compatibility is checked by schema, not by an exact mailcow release name.
 
 The complete `init_db.inc.php` file is byte-identical in `2026-09`, `2026-09a`, and
 `2026-10`. This establishes schema compatibility, rather than full acceptance of every
@@ -33,6 +38,7 @@ from each release's `data/web/inc/init_db.inc.php`:
 
 | Release tags | Database schema |
 | --- | --- |
+| `2026-11` | `02112026_1600` (Compose `DB_VERSION`) |
 | `2026-09`, `2026-09a`, `2026-10` | `18082026_1200` |
 | `2026-03` through `2026-07b`, including the intervening patch releases | `19022026_1220` |
 | `2026-01` | `28012026_1000` |
@@ -42,7 +48,7 @@ from each release's `data/web/inc/init_db.inc.php`:
 | `2025-03` through `2025-07`, including the intervening patch releases | `27012025_1555` |
 | `2025-01`, `2025-01a`, `2025-02` | `20112024_1105` |
 
-The current schema was introduced by
+The September/October schema was introduced by
 [`8bd9e12a` on 18 August 2026](https://github.com/mailcow/mailcow-dockerized/commit/8bd9e12a73ec68945db9e12f8af406b863d9e2d8).
 It added `da_acl.alias_external_goto` for controlling aliases with external destinations.
 That column is absent in `2026-07b`; the API uses it in domain-administrator permission

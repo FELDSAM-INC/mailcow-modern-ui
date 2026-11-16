@@ -33,7 +33,9 @@ jobs:
       - name: Verify Ansible inventory settings and repeat runs in temporary fixtures
         run: sudo -n .venv/bin/python scripts/test-ansible.py
       - name: Verify mailcow routes and internal listeners with nginx
-        run: .venv/bin/python scripts/test-nginx.py
+        run: |
+          .venv/bin/python scripts/test-nginx.py --upstream 2026-09a
+          .venv/bin/python scripts/test-nginx.py --upstream 2026-11
       - name: Check the offline showcase is current
         run: |
           python3 scripts/package-showcase.py
