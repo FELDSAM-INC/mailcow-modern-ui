@@ -17,12 +17,12 @@
   },
   "images": {
     "api": {
-      "image": "ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:a39f958816653ec4fc989424ecd20efcae1d5b4e0c2d5f9e50c7eb69fd76e9dc",
+      "image": "ghcr.io/feldsam-inc/mailcow-rest-v2@sha256:68ff0646d6d26608afa4ebf6ef04f55f725dad1c1588f4e21f5224eb4e6752dd",
       "revision": "aa867de2a3db853824511c02d07de2fdf834ade8"
     },
     "ui": {
-      "image": "ghcr.io/feldsam-inc/mailcowui-ng@sha256:84a8eb73b852bddfff0d4ece77a86a3905212111270c1e98add308d79c4e6e6b",
-      "revision": "6923d364533072e4a37078fe0102c720168863e2"
+      "image": "ghcr.io/feldsam-inc/mailcowui-ng@sha256:318aed3705d297282442349744f521b4227902b0cd5625a500133e62c7655e47",
+      "revision": "cdc4098e56a7ba3620a39fa7bec8dcbf73595d8c"
     }
   }
 }
